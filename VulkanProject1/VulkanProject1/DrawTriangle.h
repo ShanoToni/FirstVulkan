@@ -11,14 +11,17 @@
 #include <cstdlib>
 #include <vector>
 #include <optional>
+#include <set>
+
 
 struct QueueFamilyIndices
 {
 	std::optional<uint32_t> graphicsFamily;
+	std::optional<uint32_t> presentFamily;
 
 	bool isComplete()
 	{
-		return graphicsFamily.has_value();
+		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
 };
 
@@ -50,6 +53,9 @@ private:
 	void pickPhysicalDevice();
 	void createLogicalDevice();
 
+	//Surface
+	void createSurface();
+	
 	//queue fams
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	
@@ -78,5 +84,7 @@ private:
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 	VkQueue graphicsQueue;
+	VkQueue presentQueue;
+	VkSurfaceKHR surface;
 };
 
