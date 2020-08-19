@@ -1,7 +1,6 @@
 #include "DrawTriangle.h"
 
 
-
 // ------------------------------------------------ GLOBAL VARS ---------------------------------------------------------------
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -45,6 +44,8 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 
 // ---------------------------------------------------------MEMBER FUNCTIONS --------------------------------------------------------------------------
 
+
+// --------------------------------------------------------- INITILIZATION  -------------------------------------------------------------------------------
 void DrawTriangle::run()
 {
 	try
@@ -76,6 +77,8 @@ void DrawTriangle::initVulkan()
 {
 	createInstance();
 	setupDebugMessenger();
+	pickPhysicalDevice();
+	createLogicalDevice();
 }
 
 void DrawTriangle::mainLoop()
@@ -85,6 +88,10 @@ void DrawTriangle::mainLoop()
 		glfwPollEvents();
 	}
 }
+
+// --------------------------------------------------------- VULKAN ------------------------------------------------------------------------------------------
+
+// --------------------------------------------------------- Instance
 
 void DrawTriangle::createInstance()
 {
@@ -135,6 +142,8 @@ void DrawTriangle::createInstance()
 
 }
 
+// --------------------------------------------------------- VALIDATION
+
 void DrawTriangle::setupDebugMessenger()
 {
 	if (!enableValidationLayers) return;
@@ -173,6 +182,108 @@ void DrawTriangle::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateI
 	createInfo.pfnUserCallback = debugCallback;
 	createInfo.pUserData = nullptr;
 }
+
+// -------------------------------------------------------- DEVICES
+
+void DrawTriangle::pickPhysicalDevice()
+{
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("Failed to find GPUs with Vulkan Support!");
+	}
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, & deviceCount, devices.data());
+
+	for (const auto& device : devices)
+	{
+		if (isPhysicalDeviceSuitable(device))
+		{
+			physicalDevice = device;
+			break;
+		}
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Failed to find suitable GPU");
+	}
+}
+
+void DrawTriangle::createLogicalDevice()
+{
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	//TODO: Query support for features 
+	VkPhysicalDeviceFeatures deviceFeatures{};
+
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = &queueCreateInfo;
+	createInfo.queueCreateInfoCount = 1;
+	createInfo.pEnabledFeatures = &deviceFeatures;
+
+	createInfo.enabledExtensionCount = 0;
+
+	if (enableValidationLayers)
+	{
+		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+	}
+
+	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create logical device!");
+	}
+
+	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+}
+
+QueueFamilyIndices DrawTriangle::findQueueFamilies(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices;
+	
+
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			indices.graphicsFamily = i;
+		}
+
+		if (indices.isComplete())
+		{
+			break;
+		}
+
+		i++;
+	}
+
+	return indices;
+}
+
+// --------------------------------------------------------- CHECKS ------------------------------------------------------------------------------------------
 
 void DrawTriangle::checkExtentionSupport()
 {
@@ -229,8 +340,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DrawTriangle::debugCallback(VkDebugUtilsMessageSe
 	return VK_FALSE;
 }
 
+bool DrawTriangle::isPhysicalDeviceSuitable(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices = findQueueFamilies(device);
+
+	return indices.isComplete();
+}
+
+// --------------------------------------------------------- CLEANUP -------------------------------------------------------------------------------------------------
+
 void DrawTriangle::cleanup()
 {
+	vkDestroyDevice(device, nullptr);
+
 	if (enableValidationLayers) 
 	{
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
