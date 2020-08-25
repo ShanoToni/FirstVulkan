@@ -25,6 +25,13 @@ struct QueueFamilyIndices
 	}
 };
 
+struct SwapChainSupportDetails 
+{
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
+
 class DrawTriangle
 {
 public:
@@ -58,7 +65,20 @@ private:
 	
 	//queue fams
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+
+	// Swapchain
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+	void createSwapChain();
+
+	// Image Views
+	void createImageViews();
 
 	//Vulkan Checks
 	void checkExtentionSupport();
@@ -72,6 +92,8 @@ private:
 
 	bool isPhysicalDeviceSuitable(VkPhysicalDevice device);
 
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+
 	//Cleanup
 	void cleanup();
 
@@ -80,11 +102,22 @@ private:
 
 	//Vulkan Vars
 	VkInstance instance;
+
 	VkDebugUtilsMessengerEXT debugMessenger;
+
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
+
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+
 	VkSurfaceKHR surface;
+
+	VkSwapchainKHR swapChain;
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
+
+	std::vector<VkImageView> swapChainImageViews;
 };
 
