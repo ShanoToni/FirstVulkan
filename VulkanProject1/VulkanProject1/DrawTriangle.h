@@ -12,6 +12,7 @@
 #include <vector>
 #include <optional>
 #include <set>
+#include <fstream>
 
 
 struct QueueFamilyIndices
@@ -80,6 +81,13 @@ private:
 	// Image Views
 	void createImageViews();
 
+	//Graphics pipeline
+	void createRenderPass();
+
+	void createGraphicsPipeline();
+
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+
 	//Vulkan Checks
 	void checkExtentionSupport();
 	bool checkValidationLayerSupport();
@@ -119,5 +127,9 @@ private:
 	VkExtent2D swapChainExtent;
 
 	std::vector<VkImageView> swapChainImageViews;
+
+	VkRenderPass renderPass;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipeline;
 };
 
