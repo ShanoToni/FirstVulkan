@@ -88,6 +88,18 @@ private:
 
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 
+	void createFramebuffers();
+
+	//Drawing Commands
+
+	void createCommandPool();
+	void createCommandBuffers();
+
+	//DRAWING
+	void createSyncObjects();
+
+	void drawFrame();
+
 	//Vulkan Checks
 	void checkExtentionSupport();
 	bool checkValidationLayerSupport();
@@ -131,5 +143,16 @@ private:
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
+
+	std::vector<VkFramebuffer> swapChainFramebuffers;
+	std::vector<VkCommandBuffer> commandBuffers;
+
+	VkCommandPool commandPool;
+
+	std::vector<VkSemaphore> imageAvailableSemaphore;
+	std::vector<VkSemaphore> renderFinishedSemaphore;
+	std::vector<VkFence> inFlightFences;
+	std::vector<VkFence> imagesInFlight;
+	size_t currentFrame = 0;
 };
 
