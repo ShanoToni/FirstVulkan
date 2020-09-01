@@ -4,9 +4,12 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -15,6 +18,7 @@
 #include <set>
 #include <fstream>
 #include <array>
+#include <chrono>
 
 struct QueueFamilyIndices
 {
@@ -63,6 +67,12 @@ struct Vertex {
 
 		return attributeDescriptions;
 	}
+};
+
+struct UniformBufferObject {
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
 };
 
 class DrawTriangle
@@ -127,14 +137,24 @@ private:
 	void createFramebuffers();
 
 	//Drawing Commands
-
 	void createCommandPool();
+
 	void createCommandBuffers();
 
 	//Buffer
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+	//Uniform Buffers
+	void createDescriptorSetLayout();
+
+	void createUniformBuffers();
+	
+	void updateUniformBuffer(uint32_t currentImage);
+
+	void createDescritorPool();
+	void createDescriptorSet();
 
 	//VERTEX
 	void createVertexBuffer();
@@ -207,7 +227,16 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
+	
+	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSet> descriptorSets;
 
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+
+	VkDescriptorSetLayout descriptorSetLayout;
+
+	
 public:
 	bool framebufferResized = false;
 };
