@@ -1,4 +1,4 @@
-#include "DrawTriangle.h"
+#include "VulkanRenderer.h"
 
 
 // ------------------------------------------------ GLOBAL VARS ---------------------------------------------------------------
@@ -25,15 +25,13 @@ const std::string FShaderPath = "Shaders/frag.spv";
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<Vertex> vertices = {
-	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+	{{-40.5f, 0.f,40.5f}, {1.0f, 0.0f, 0.0f}},
+	{{40.5f, 0.f, 40.5f}, {0.0f, 1.0f, 0.0f}},
+	{{40.5f, 0.f, -40.5f}, {0.0f, 0.0f, 1.0f}},
+	{{-40.5f, 0.f, -40.5f}, {1.0f, 1.0f, 1.0f}}
 };
 
-const std::vector<uint16_t> indices = {
-	0, 1, 2, 2, 3, 0
-};
+const std::vector<uint16_t> indices = {	0, 1, 2, 2, 3, 0 };
 
 //--------------------------------------------ADDITIONAL PROXY FUNCTION FOR VALIDATION LAYERS-------------------------------------------------
 
@@ -85,20 +83,63 @@ static std::vector<char> readFile(const std::string& filename)
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-	auto app = reinterpret_cast<DrawTriangle*>(glfwGetWindowUserPointer(window));
+	auto app = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
 	app->framebufferResized = true;
 }
+
+static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	Camera* cam = reinterpret_cast<Camera*>(glfwGetWindowUserPointer(window));
+
+	if (cam->getFirstMouse())
+	{
+		cam->getLastX() = xpos;
+		cam->getLastY() = ypos;
+		cam->getFirstMouse() = false;
+	}
+
+	float xoffset = xpos - cam->getLastX();
+	float yoffset = cam->getLastY() - ypos;
+	cam->getLastX() = xpos;
+	cam->getLastY() = ypos;
+
+	std::cout << "Callback called" << std::endl;
+
+	float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	cam->getYaw() += xoffset;
+	cam->getPitch() += yoffset;
+
+	if (cam->getPitch() > 89.0f)
+		cam->getPitch() = 89.0f;
+	if (cam->getPitch() < -89.0f)
+		cam->getPitch() = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(cam->getYaw())) * cos(glm::radians(cam->getPitch()));
+	direction.y = sin(glm::radians(cam->getPitch()));
+	direction.z = sin(glm::radians(cam->getYaw())) * cos(glm::radians(cam->getPitch()));
+	cam->getCamFront() = glm::normalize(direction);
+
+	cam->update();
+}
+
 
 // ---------------------------------------------------------MEMBER FUNCTIONS --------------------------------------------------------------------------
 
 
 // --------------------------------------------------------- INITILIZATION  -------------------------------------------------------------------------------
-void DrawTriangle::run()
+void VulkanRenderer::run()
 {
 	try
 	{
 		initWindow();
 		initVulkan();
+		std::unique_ptr<Camera> cam(new Camera(window));
+		camera = std::move(cam);
+		glfwSetCursorPosCallback(window, mouse_callback);
 		//checkExtentionSupport();
 		//checkValidationLayerSupport();
 		mainLoop();
@@ -110,7 +151,7 @@ void DrawTriangle::run()
 	}
 }
 
-void DrawTriangle::initWindow()
+void VulkanRenderer::initWindow()
 {
 	glfwInit();
 
@@ -120,9 +161,11 @@ void DrawTriangle::initWindow()
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 	glfwSetWindowUserPointer(window, this);
 	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 }
 
-void DrawTriangle::initVulkan()
+void VulkanRenderer::initVulkan()
 {
 	createInstance();
 	setupDebugMessenger();
@@ -145,11 +188,12 @@ void DrawTriangle::initVulkan()
 	createSyncObjects();
 }
 
-void DrawTriangle::mainLoop()
+void VulkanRenderer::mainLoop()
 {
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		camera->processInput(window);
 		drawFrame();
 	}
 
@@ -160,7 +204,7 @@ void DrawTriangle::mainLoop()
 
 // --------------------------------------------------------- Instance
 
-void DrawTriangle::createInstance()
+void VulkanRenderer::createInstance()
 {
 	if (enableValidationLayers && !checkValidationLayerSupport())
 	{
@@ -211,7 +255,7 @@ void DrawTriangle::createInstance()
 
 // --------------------------------------------------------- VALIDATION
 
-void DrawTriangle::setupDebugMessenger()
+void VulkanRenderer::setupDebugMessenger()
 {
 	if (!enableValidationLayers) return;
 
@@ -223,7 +267,7 @@ void DrawTriangle::setupDebugMessenger()
 	}
 }
 
-std::vector<const char*> DrawTriangle::getRequiredExtentions()
+std::vector<const char*> VulkanRenderer::getRequiredExtentions()
 {
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -240,7 +284,7 @@ std::vector<const char*> DrawTriangle::getRequiredExtentions()
 	return extensions;
 }
 
-void DrawTriangle::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+void VulkanRenderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
 	createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -252,7 +296,7 @@ void DrawTriangle::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateI
 
 // -------------------------------------------------------- DEVICES
 
-void DrawTriangle::pickPhysicalDevice()
+void VulkanRenderer::pickPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -280,7 +324,7 @@ void DrawTriangle::pickPhysicalDevice()
 	}
 }
 
-void DrawTriangle::createLogicalDevice()
+void VulkanRenderer::createLogicalDevice()
 {
 	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
@@ -331,7 +375,7 @@ void DrawTriangle::createLogicalDevice()
 
 // -------------------------------------------------------- SURFACE
 
-void DrawTriangle::createSurface()
+void VulkanRenderer::createSurface()
 {
 	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
 	{
@@ -341,7 +385,7 @@ void DrawTriangle::createSurface()
 
 // -------------------------------------------------------- QUEUES
 
-QueueFamilyIndices DrawTriangle::findQueueFamilies(VkPhysicalDevice device)
+QueueFamilyIndices VulkanRenderer::findQueueFamilies(VkPhysicalDevice device)
 {
 	QueueFamilyIndices indices;
 
@@ -382,7 +426,7 @@ QueueFamilyIndices DrawTriangle::findQueueFamilies(VkPhysicalDevice device)
 
 // -------------------------------------------------------- SWAPCHAIN
 
-SwapChainSupportDetails DrawTriangle::querySwapChainSupport(VkPhysicalDevice device)
+SwapChainSupportDetails VulkanRenderer::querySwapChainSupport(VkPhysicalDevice device)
 {
 	SwapChainSupportDetails details;
 
@@ -412,7 +456,7 @@ SwapChainSupportDetails DrawTriangle::querySwapChainSupport(VkPhysicalDevice dev
 	return details;
 }
 
-VkSurfaceFormatKHR DrawTriangle::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+VkSurfaceFormatKHR VulkanRenderer::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	for (const auto& availableFormat : availableFormats)
 	{
@@ -425,7 +469,7 @@ VkSurfaceFormatKHR DrawTriangle::chooseSwapSurfaceFormat(const std::vector<VkSur
 	return availableFormats[0];
 }
 
-VkPresentModeKHR DrawTriangle::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+VkPresentModeKHR VulkanRenderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes)
 	{
@@ -438,7 +482,7 @@ VkPresentModeKHR DrawTriangle::chooseSwapPresentMode(const std::vector<VkPresent
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D DrawTriangle::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+VkExtent2D VulkanRenderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
 	if (capabilities.currentExtent.width != UINT32_MAX)
 	{
@@ -458,7 +502,7 @@ VkExtent2D DrawTriangle::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabi
 	}
 }
 
-void DrawTriangle::createSwapChain()
+void VulkanRenderer::createSwapChain()
 {
 	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
@@ -519,7 +563,7 @@ void DrawTriangle::createSwapChain()
 	swapChainExtent = extent;
 }
 
-void DrawTriangle::recreateSwapChain()
+void VulkanRenderer::recreateSwapChain()
 {
 
 	int width = 0, height = 0;
@@ -546,7 +590,7 @@ void DrawTriangle::recreateSwapChain()
 	createCommandBuffers();
 }
 
-void DrawTriangle::cleanupSwapChain()
+void VulkanRenderer::cleanupSwapChain()
 {
 	for (size_t i = 0; i < swapChainFramebuffers.size(); i++)
 	{
@@ -574,7 +618,7 @@ void DrawTriangle::cleanupSwapChain()
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
-void DrawTriangle::createImageViews()
+void VulkanRenderer::createImageViews()
 {
 	swapChainImageViews.resize(swapChainImages.size());
 
@@ -606,7 +650,7 @@ void DrawTriangle::createImageViews()
 
 // --------------------------------------------------------- GRAPHICS PIPELINE ------------------------------------------------------------------------------------------
 
-void DrawTriangle::createRenderPass()
+void VulkanRenderer::createRenderPass()
 {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapChainImageFormat;
@@ -654,7 +698,7 @@ void DrawTriangle::createRenderPass()
 	}
 }
 
-void DrawTriangle::createGraphicsPipeline()
+void VulkanRenderer::createGraphicsPipeline()
 {
 	auto vertShaderCode = readFile(VShaderPath);
 	auto fragShaderCode = readFile(FShaderPath);
@@ -830,7 +874,7 @@ void DrawTriangle::createGraphicsPipeline()
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-VkShaderModule DrawTriangle::createShaderModule(const std::vector<char>& code)
+VkShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code)
 {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -847,7 +891,7 @@ VkShaderModule DrawTriangle::createShaderModule(const std::vector<char>& code)
 	return shaderModule;
 }
 
-void DrawTriangle::createFramebuffers()
+void VulkanRenderer::createFramebuffers()
 {
 	swapChainFramebuffers.resize(swapChainImageViews.size());
 
@@ -875,7 +919,7 @@ void DrawTriangle::createFramebuffers()
 
 // --------------------------------------------------------- DRAWING COMMANDS ------------------------------------------------------------------------------------------
 
-void DrawTriangle::createCommandPool()
+void VulkanRenderer::createCommandPool()
 {
 	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
@@ -890,7 +934,7 @@ void DrawTriangle::createCommandPool()
 	}
 }
 
-void DrawTriangle::createCommandBuffers()
+void VulkanRenderer::createCommandBuffers()
 {
 	commandBuffers.resize(swapChainFramebuffers.size());
 
@@ -955,7 +999,7 @@ void DrawTriangle::createCommandBuffers()
 
 // --------------------------------------------------------- BUFFER ------------------------------------------------------------------------------------------
 
-void DrawTriangle::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+void VulkanRenderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -984,7 +1028,7 @@ void DrawTriangle::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
-void DrawTriangle::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void VulkanRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1022,7 +1066,7 @@ void DrawTriangle::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 
 // --------------------------------------------------------- UNIFORM BUFFER ------------------------------------------------------------------------------------------
 
-void DrawTriangle::createDescriptorSetLayout()
+void VulkanRenderer::createDescriptorSetLayout()
 {
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding = 0;
@@ -1041,7 +1085,7 @@ void DrawTriangle::createDescriptorSetLayout()
 	}
 }
 
-void DrawTriangle::createUniformBuffers()
+void VulkanRenderer::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
@@ -1057,17 +1101,17 @@ void DrawTriangle::createUniformBuffers()
 	}
 }
 
-void DrawTriangle::updateUniformBuffer(uint32_t currentImage)
+void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0, 2.0, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.f);
+	ubo.model = glm::mat4(1.0f);
+	ubo.view = camera->getView();
+	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 1000.f);
 	ubo.proj[1][1] *= -1;
 
 	void* data;
@@ -1076,7 +1120,7 @@ void DrawTriangle::updateUniformBuffer(uint32_t currentImage)
 	vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
 }
 
-void DrawTriangle::createDescritorPool()
+void VulkanRenderer::createDescritorPool()
 {
 	VkDescriptorPoolSize poolSize{};
 	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1095,7 +1139,7 @@ void DrawTriangle::createDescritorPool()
 	}
 }
 
-void DrawTriangle::createDescriptorSet()
+void VulkanRenderer::createDescriptorSet()
 {
 	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -1137,7 +1181,7 @@ void DrawTriangle::createDescriptorSet()
 
 // --------------------------------------------------------- VERTEX BUFFER ------------------------------------------------------------------------------------------
 
-void DrawTriangle::createVertexBuffer()
+void VulkanRenderer::createVertexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -1165,7 +1209,7 @@ void DrawTriangle::createVertexBuffer()
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-void DrawTriangle::createIndexBuffer()
+void VulkanRenderer::createIndexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
@@ -1186,7 +1230,7 @@ void DrawTriangle::createIndexBuffer()
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-uint32_t DrawTriangle::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -1204,7 +1248,7 @@ uint32_t DrawTriangle::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 
 // --------------------------------------------------------- DRAWING ------------------------------------------------------------------------------------------
 
-void DrawTriangle::createSyncObjects()
+void VulkanRenderer::createSyncObjects()
 {
 	imageAvailableSemaphore.resize(MAX_FRAMES_IN_FLIGHT);
 	renderFinishedSemaphore.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1229,7 +1273,7 @@ void DrawTriangle::createSyncObjects()
 	}
 }
 
-void DrawTriangle::drawFrame()
+void VulkanRenderer::drawFrame()
 {
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -1307,7 +1351,7 @@ void DrawTriangle::drawFrame()
 
 // --------------------------------------------------------- CHECKS ------------------------------------------------------------------------------------------
 
-void DrawTriangle::checkExtentionSupport()
+void VulkanRenderer::checkExtentionSupport()
 {
 	uint32_t extentionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extentionCount, nullptr);
@@ -1323,7 +1367,7 @@ void DrawTriangle::checkExtentionSupport()
 	}
 }
 
-bool DrawTriangle::checkValidationLayerSupport()
+bool VulkanRenderer::checkValidationLayerSupport()
 {
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -1355,14 +1399,14 @@ bool DrawTriangle::checkValidationLayerSupport()
 	return true;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DrawTriangle::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanRenderer::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
 	std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
 
 	return VK_FALSE;
 }
 
-bool DrawTriangle::isPhysicalDeviceSuitable(VkPhysicalDevice device)
+bool VulkanRenderer::isPhysicalDeviceSuitable(VkPhysicalDevice device)
 {
 	QueueFamilyIndices indices = findQueueFamilies(device);
 
@@ -1378,7 +1422,7 @@ bool DrawTriangle::isPhysicalDeviceSuitable(VkPhysicalDevice device)
 	return indices.isComplete() && extensionsSupported && swapChainGood;
 }
 
-bool DrawTriangle::checkDeviceExtensionSupport(VkPhysicalDevice device)
+bool VulkanRenderer::checkDeviceExtensionSupport(VkPhysicalDevice device)
 {
 	uint32_t extentionCount;
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extentionCount, nullptr);
@@ -1414,7 +1458,7 @@ bool DrawTriangle::checkDeviceExtensionSupport(VkPhysicalDevice device)
 
 // --------------------------------------------------------- CLEANUP -------------------------------------------------------------------------------------------------
 
-void DrawTriangle::cleanup()
+void VulkanRenderer::cleanup()
 {
 	cleanupSwapChain();
 

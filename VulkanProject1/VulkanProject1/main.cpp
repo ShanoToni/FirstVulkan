@@ -1,8 +1,8 @@
-#include "DrawTriangle.h"
+#include "VulkanRenderer.h"
 
 int main()
 {
-	DrawTriangle app;
+	VulkanRenderer app;
 	app.run();
 
 	return 0;
