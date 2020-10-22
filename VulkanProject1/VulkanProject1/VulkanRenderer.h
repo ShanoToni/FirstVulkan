@@ -124,6 +124,15 @@ private:
 
 	void createIndexBuffer();
 
+	// ------------------------- TODO ---------------------------------------------------------
+	//1.for each shader
+	/*
+	void updateVertexBuffer();
+	void updateIndexBuffer();
+	*/
+	//2.change the UBO to be contained by the shader and created there
+	//2. create the UBO data struct for each mesh and an update for each mesh in the renderer
+
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	//DRAWING
