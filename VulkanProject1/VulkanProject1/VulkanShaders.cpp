@@ -2,8 +2,8 @@
 
 VulkanShaders::VulkanShaders(std::string vert, std::string frag)
 {
-	auto vertShaderCode = readFile(vert);
-	auto fragShaderCode = readFile(frag);
+	vertPath = vert;
+	fragPath = frag;
 }
 
 VulkanShaders::VulkanShaders(std::string vert, std::string frag, std::vector<Mesh> meshesToAdd)
@@ -18,6 +18,9 @@ VulkanShaders::VulkanShaders(std::string vert, std::string frag, std::vector<Mes
 
 void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkDescriptorSetLayout descriptorSetLayout, VkRenderPass renderPass, VkDevice device)
 {
+	auto vertShaderCode = readFile(vertPath);
+	auto fragShaderCode = readFile(fragPath);
+
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode, device);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode, device);
 
@@ -92,7 +95,8 @@ void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swa
 	//multisampler
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.sampleShadingEnable = VK_FALSE;
+	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 	multisampling.minSampleShading = 1.0f;
 	multisampling.pSampleMask = nullptr;
 	multisampling.alphaToCoverageEnable = VK_FALSE;
@@ -174,6 +178,26 @@ void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swa
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
+std::vector<char> VulkanShaders::readFile(std::string filepath)
+{
+	std::ifstream file(filepath, std::ios::ate | std::ios::binary);
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error("failed to open file");
+	}
+
+	size_t fileSize = (size_t)file.tellg();
+	std::vector<char> buffer(fileSize);
+
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+
+	file.close();
+
+	return buffer;
+}
+
 VkShaderModule VulkanShaders::createShaderModule(const std::vector<char>& code, VkDevice device)
 {
 	VkShaderModuleCreateInfo createInfo{};
@@ -187,6 +211,8 @@ VkShaderModule VulkanShaders::createShaderModule(const std::vector<char>& code, 
 	{
 		throw std::runtime_error("failed to create shader module");
 	}
+
+	return shaderModule;
 }
 
 void VulkanShaders::addMesh(Mesh meshToAdd)

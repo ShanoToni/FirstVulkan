@@ -25,14 +25,17 @@ public:
 
 	std::vector<Vertex> getVerticesFromMeshes();
 
+	inline VkPipeline getPipeline() { return ShaderPipeline; }
+	inline VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
+
 	~VulkanShaders();
 
 private:
 	VkPipeline ShaderPipeline;
 	VkPipelineLayout pipelineLayout;
 
-	std::vector<char> vertShaderCode;
-	std::vector<char> fragShaderCode;
+	std::string vertPath;
+	std::string fragPath;
 	std::vector<Mesh> meshes;
 };
 

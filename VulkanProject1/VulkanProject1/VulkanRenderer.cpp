@@ -174,7 +174,7 @@ void VulkanRenderer::initVulkan()
 	createImageViews();
 	createRenderPass();
 	createDescriptorSetLayout();
-	createGraphicsPipeline();
+	createGraphicsPipelines();
 	createFramebuffers();
 	createCommandPool();
 	createVertexBuffer();
@@ -580,7 +580,7 @@ void VulkanRenderer::recreateSwapChain()
 	createSwapChain();
 	createImageViews();
 	createRenderPass();
-	createGraphicsPipeline();
+	createGraphicsPipelines();
 	createFramebuffers();
 	createUniformBuffers();
 	createDescritorPool();
@@ -696,8 +696,19 @@ void VulkanRenderer::createRenderPass()
 	}
 }
 
-void VulkanRenderer::createGraphicsPipeline()
+void VulkanRenderer::createGraphicsPipelines()
 {
+	Mesh m = Mesh(vertices);
+	std::vector<Mesh> meshes;
+	meshes.push_back(m);
+
+	std::shared_ptr <VulkanShaders> shader(new VulkanShaders(VShaderPath, FShaderPath, meshes));
+	shader->initShaderPipeline(WIDTH,HEIGHT, swapChainExtent, descriptorSetLayout, renderPass, device);
+
+	shaders.push_back(shader);
+
+	// ---------------------------------------------------------------- OLD CODE -----------------------------------------------------------------------------------------------
+	/*
 	auto vertShaderCode = readFile(VShaderPath);
 	auto fragShaderCode = readFile(FShaderPath);
 
@@ -804,7 +815,7 @@ void VulkanRenderer::createGraphicsPipeline()
 	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
-	*/
+	
 
 	VkPipelineColorBlendStateCreateInfo colorBlending{};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -870,6 +881,7 @@ void VulkanRenderer::createGraphicsPipeline()
 	//clean up 
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
+	*/
 }
 
 VkShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code)
@@ -972,7 +984,7 @@ void VulkanRenderer::createCommandBuffers()
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaders[0]->getPipeline());
 
 		VkBuffer vertexBuffers[] = { vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
@@ -981,7 +993,7 @@ void VulkanRenderer::createCommandBuffers()
 
 		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaders[0]->getPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
 		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
