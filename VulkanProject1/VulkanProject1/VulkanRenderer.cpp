@@ -103,8 +103,6 @@ static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	cam->getLastX() = xpos;
 	cam->getLastY() = ypos;
 
-	std::cout << "Callback called" << std::endl;
-
 	float sensitivity = 0.1f;
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
