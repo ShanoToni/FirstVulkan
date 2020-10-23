@@ -159,13 +159,13 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="VulkanShaders.cpp" />
+    <ClCompile Include="VulkanShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="VulkanRenderer.h" />
-    <ClInclude Include="VulkanShaders.h" />
+    <ClInclude Include="VulkanShader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

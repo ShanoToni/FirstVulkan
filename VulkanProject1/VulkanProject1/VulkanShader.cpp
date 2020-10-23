@@ -1,13 +1,13 @@
-#include "VulkanShaders.h"
+#include "VulkanShader.h"
 
-VulkanShaders::VulkanShaders(std::string vert, std::string frag)
+VulkanShader::VulkanShader(std::string vert, std::string frag)
 {
 	vertPath = vert;
 	fragPath = frag;
 }
 
-VulkanShaders::VulkanShaders(std::string vert, std::string frag, std::vector<Mesh> meshesToAdd)
-	:VulkanShaders(vert, frag)
+VulkanShader::VulkanShader(std::string vert, std::string frag, std::vector<std::shared_ptr<Mesh>> meshesToAdd)
+	:VulkanShader(vert, frag)
 
 {
 	for (auto m : meshesToAdd)
@@ -16,7 +16,7 @@ VulkanShaders::VulkanShaders(std::string vert, std::string frag, std::vector<Mes
 	}
 }
 
-void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkDescriptorSetLayout descriptorSetLayout, VkRenderPass renderPass, VkDevice device)
+void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkDescriptorSetLayout descriptorSetLayout, VkRenderPass renderPass, VkDevice device)
 {
 	auto vertShaderCode = readFile(vertPath);
 	auto fragShaderCode = readFile(fragPath);
@@ -40,17 +40,17 @@ void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swa
 	// both shaders
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	//passing of data to vertex
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	//passing of data to BasicVertex
+	VkPipelineVertexInputStateCreateInfo BasicVertexInputInfo{};
+	BasicVertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-	auto bindingDescritption = Vertex::getBindingDescription();
-	auto attributeDescription = Vertex::getAttributeDescriptions();
+	auto bindingDescritption = BasicVertex::getBindingDescription();
+	auto attributeDescription = BasicVertex::getAttributeDescriptions();
 
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescritption;
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
+	BasicVertexInputInfo.vertexBindingDescriptionCount = 1;
+	BasicVertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
+	BasicVertexInputInfo.pVertexBindingDescriptions = &bindingDescritption;
+	BasicVertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
 
 	//Info for how primitives are to be rendered : Chosen as triangles
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -153,7 +153,7 @@ void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swa
 	pipelineInfo.stageCount = 2;
 	pipelineInfo.pStages = shaderStages;
 	
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pVertexInputState = &BasicVertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
@@ -178,7 +178,8 @@ void VulkanShaders::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swa
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-std::vector<char> VulkanShaders::readFile(std::string filepath)
+
+std::vector<char> VulkanShader::readFile(std::string filepath)
 {
 	std::ifstream file(filepath, std::ios::ate | std::ios::binary);
 
@@ -198,7 +199,7 @@ std::vector<char> VulkanShaders::readFile(std::string filepath)
 	return buffer;
 }
 
-VkShaderModule VulkanShaders::createShaderModule(const std::vector<char>& code, VkDevice device)
+VkShaderModule VulkanShader::createShaderModule(const std::vector<char>& code, VkDevice device)
 {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -215,25 +216,15 @@ VkShaderModule VulkanShaders::createShaderModule(const std::vector<char>& code, 
 	return shaderModule;
 }
 
-void VulkanShaders::addMesh(Mesh meshToAdd)
+void VulkanShader::addMesh(std::shared_ptr<Mesh> meshToAdd)
 {
 	meshes.push_back(meshToAdd);
 }
 
-std::vector<Vertex> VulkanShaders::getVerticesFromMeshes()
-{
-	std::vector<Vertex> vertices;
-	for (auto mesh : meshes)
-	{
-		for (auto meshVertices : mesh.getVertices())
-		{
-			vertices.push_back(meshVertices);
-		}
-	}
-	return vertices;
-}
 
-VulkanShaders::~VulkanShaders()
+
+
+VulkanShader::~VulkanShader()
 {
 
 }

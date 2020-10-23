@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Camera.h"
-
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -12,7 +10,8 @@
 #include <array>
 #include <chrono>
 #include <map>
-#include "VulkanShaders.h"
+
+#include "VulkanShader.h"
 
 struct QueueFamilyIndices
 {
@@ -32,11 +31,6 @@ struct SwapChainSupportDetails
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-};
 
 class VulkanRenderer
 {
@@ -95,8 +89,6 @@ private:
 
 	void createGraphicsPipelines();
 
-	VkShaderModule createShaderModule(const std::vector<char>& code);
-
 	void createFramebuffers();
 
 	//Drawing Commands
@@ -105,7 +97,7 @@ private:
 	void createCommandBuffers();
 
 	//Buffer
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	/*void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);*/
 
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -119,7 +111,7 @@ private:
 	void createDescritorPool();
 	void createDescriptorSet();
 
-	//VERTEX
+	//BasicVertex
 	void createVertexBuffer();
 
 	void createIndexBuffer();
@@ -127,13 +119,13 @@ private:
 	// ------------------------- TODO ---------------------------------------------------------
 	//1.for each shader
 	/*
-	void updateVertexBuffer();
+	void updateBasicVertexBuffer();
 	void updateIndexBuffer();
 	*/
 	//2.change the UBO to be contained by the shader and created there
 	//2. create the UBO data struct for each mesh and an update for each mesh in the renderer
 
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	//uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	//DRAWING
 	void createSyncObjects();
@@ -184,8 +176,8 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 
 	VkRenderPass renderPass;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
+	//VkPipelineLayout pipelineLayout;
+	//VkPipeline graphicsPipeline;
 
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -198,20 +190,20 @@ private:
 	std::vector<VkFence> imagesInFlight;
 	size_t currentFrame = 0;
 
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
+	//VkBuffer vertexBuffer;
+	//VkDeviceMemory vertexBufferMemory;
+	//VkBuffer indexBuffer;
+	//VkDeviceMemory indexBufferMemory;
 	
 	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
+	//std::vector<VkDescriptorSet> descriptorSets;
 
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	//std::vector<VkBuffer> uniformBuffers;
+	//std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 	VkDescriptorSetLayout descriptorSetLayout;
 
-	std::vector<std::shared_ptr<VulkanShaders>> shaders;
+	std::shared_ptr<VulkanShader> shader;
 	
 public:
 	bool framebufferResized = false;
