@@ -116,6 +116,9 @@ private:
 
 	void createIndexBuffer();
 
+	//TEXTURE
+	void createTextureImage();
+
 	// ------------------------- TODO ---------------------------------------------------------
 	//1.for each shader
 	/*
