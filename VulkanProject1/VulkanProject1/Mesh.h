@@ -17,6 +17,7 @@ struct BasicUBO {
 struct BasicVertex {
 	glm::vec3 pos;
 	glm::vec3 color;
+	glm::vec2 texCoord;
 
 	static VkVertexInputBindingDescription getBindingDescription()
 	{
@@ -28,9 +29,9 @@ struct BasicVertex {
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
 	{
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
 		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -40,6 +41,11 @@ struct BasicVertex {
 		attributeDescriptions[1].location = 1;
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(BasicVertex, color);
+
+		attributeDescriptions[2].binding = 0;
+		attributeDescriptions[2].location = 2;
+		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[2].offset = offsetof(BasicVertex, texCoord);
 
 		return attributeDescriptions;
 	}
@@ -84,10 +90,15 @@ public:
 	inline VkBuffer& getIndexBuffer() { return indexBuffer; }
 	inline VkDeviceMemory& getIndexBufferMemory() { return indexBufferMemory; }
 
+	void setTexture(std::shared_ptr<Texture> tex) { texture = tex; }
+	inline std::shared_ptr<Texture> getTexture() { return texture; }
+
 	~Mesh();
 private:
 	std::vector<BasicVertex> vertices;
 	std::vector<uint16_t> indices;
+
+	std::shared_ptr<Texture> texture;
 
 	VkDescriptorSet descriptorSet;
 

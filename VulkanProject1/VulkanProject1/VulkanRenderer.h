@@ -43,6 +43,8 @@ private:
 
 	void initVulkan();
 
+	void setupScene();
+
 	//Main Functions
 	void mainLoop();
 
@@ -118,6 +120,10 @@ private:
 
 	//TEXTURE
 	void createTextureImage();
+
+	void createTextureImageView();
+
+	void createTextureSampler();
 
 	// ------------------------- TODO ---------------------------------------------------------
 	//1.for each shader
@@ -198,7 +204,7 @@ private:
 	//VkBuffer indexBuffer;
 	//VkDeviceMemory indexBufferMemory;
 	
-	VkDescriptorPool descriptorPool;
+	//VkDescriptorPool descriptorPool;
 	//std::vector<VkDescriptorSet> descriptorSets;
 
 	//std::vector<VkBuffer> uniformBuffers;

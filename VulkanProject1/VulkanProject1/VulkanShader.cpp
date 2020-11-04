@@ -16,7 +16,7 @@ VulkanShader::VulkanShader(std::string vert, std::string frag, std::vector<std::
 	}
 }
 
-void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkDescriptorSetLayout descriptorSetLayout, VkRenderPass renderPass, VkDevice device)
+void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkRenderPass renderPass, VkDevice device)
 {
 	auto vertShaderCode = readFile(vertPath);
 	auto fragShaderCode = readFile(fragPath);
@@ -216,12 +216,66 @@ VkShaderModule VulkanShader::createShaderModule(const std::vector<char>& code, V
 	return shaderModule;
 }
 
+void VulkanShader::createDescriptorSetLayout(VkDevice device)
+{
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+
+	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
+
+	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
+}
+
+void VulkanShader::createDescritorPool(VkDevice device, int swapChainSize)
+{
+	std::array<VkDescriptorPoolSize, 2> poolSizes{};
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;;
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
+
+	poolInfo.maxSets = static_cast<uint32_t>(swapChainSize) * meshes.size();
+
+	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+
+void VulkanShader::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device)
+{
+	for (auto& mesh : getMeshes())
+	{
+		mesh->createDescriptorSets(swapChainImages, descriptorSetLayout, descriptorPool, device);
+	}
+}
+
 void VulkanShader::addMesh(std::shared_ptr<Mesh> meshToAdd)
 {
 	meshes.push_back(meshToAdd);
 }
-
-
 
 
 VulkanShader::~VulkanShader()

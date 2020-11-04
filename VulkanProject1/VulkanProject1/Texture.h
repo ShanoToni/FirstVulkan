@@ -20,7 +20,12 @@ public:
 	Texture(std::string fName);
 
 	void createTexture(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue);
+
 	void createImage(uint32_t widht, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VkDevice device, VkPhysicalDevice physicalDevice);
+
+	void createTextureImageView(VkDevice device);
+
+	void createTextureSampler(VkDevice device);
 
 	static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkDevice device, VkPhysicalDevice physicalDevice);
 
@@ -36,6 +41,11 @@ public:
 
 	void cleanup(VkDevice device);
 
+	//GET AND SET
+	VkImageView& getTextureImageView() { return textureImageView; }
+	VkSampler& getTextureSampler() {return textureSampler;}
+
+
 	~Texture();
 
 private:
@@ -44,5 +54,9 @@ private:
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
+
+	VkSampler textureSampler;
+
+	VkImageView textureImageView;
 };
 

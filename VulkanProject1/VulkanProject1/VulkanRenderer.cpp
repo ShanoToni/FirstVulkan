@@ -24,21 +24,25 @@ const std::string FShaderPath = "Shaders/frag.spv";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+
+//--------------------------------------------- TESTING VALUES ----------------------------------------------------------------------------------
 const std::vector<BasicVertex> vertices = {
-	{{-40.5f, 0.f,40.5f}, {1.0f, 0.0f, 0.0f}},
-	{{40.5f, 0.f, 40.5f}, {0.0f, 1.0f, 0.0f}},
-	{{40.5f, 0.f, -40.5f}, {0.0f, 0.0f, 1.0f}},
-	{{-40.5f, 0.f, -40.5f}, {1.0f, 1.0f, 1.0f}}
+	{{-40.5f, 0.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{40.5f, 0.f, 40.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{40.5f, 0.f, -40.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-40.5f, 0.f, -40.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<BasicVertex> vertices2 = {
-	{{-40.5f, 5.f,40.5f}, {1.0f, 0.0f, 0.0f}},
-	{{40.5f, 5.f, 40.5f}, {0.0f, 1.0f, 0.0f}},
-	{{40.5f, 5.f, -40.5f}, {0.0f, 0.0f, 1.0f}},
-	{{-40.5f, 5.f, -40.5f}, {1.0f, 1.0f, 1.0f}}
+	{{-40.5f, 5.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{40.5f, 5.f, 40.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{40.5f, 5.f, -40.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-40.5f, 5.f, -40.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {	0, 1, 2, 2, 3, 0 };
+
+std::string textureFile = "Textures/texture.jpg";
 
 //--------------------------------------------ADDITIONAL PROXY FUNCTION FOR VALIDATION LAYERS-------------------------------------------------
 
@@ -172,6 +176,7 @@ void VulkanRenderer::initWindow()
 
 void VulkanRenderer::initVulkan()
 {
+	setupScene();
 	createInstance();
 	setupDebugMessenger();
 	createSurface();
@@ -185,6 +190,8 @@ void VulkanRenderer::initVulkan()
 	createFramebuffers();
 	createCommandPool();
 	createTextureImage();
+	createTextureImageView();
+	createTextureSampler();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -192,6 +199,23 @@ void VulkanRenderer::initVulkan()
 	createDescriptorSet();
 	createCommandBuffers();
 	createSyncObjects();
+}
+
+void VulkanRenderer::setupScene()
+{
+	Texture tex = Texture(textureFile);
+	std::vector<std::shared_ptr<Mesh>> meshes;
+	for (int i = 0; i < 1; i++)
+	{
+		std::shared_ptr<Mesh> m(new Mesh(vertices));
+		m->setIndices(indices);
+		m->translate(glm::vec3(0.0, 10.0f * i, 0.f));
+		m->setTexture(std::make_shared<Texture>(tex));
+		meshes.push_back(m);
+	}
+
+	std::shared_ptr <VulkanShader> shaderTemp(new VulkanShader(VShaderPath, FShaderPath, meshes));
+	shader = shaderTemp;
 }
 
 void VulkanRenderer::mainLoop()
@@ -351,6 +375,7 @@ void VulkanRenderer::createLogicalDevice()
 
 	//TODO: Query support for features 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -624,7 +649,7 @@ void VulkanRenderer::cleanupSwapChain()
 		}
 	}
 	
-	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+	vkDestroyDescriptorPool(device, shader->getDescriptorPool(), nullptr);
 
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
@@ -709,21 +734,13 @@ void VulkanRenderer::createRenderPass()
 	}
 }
 
+//------------------------------------------------------TESTING SUITE-------------------------------------------------------------------------------------------------------------------------
+
 void VulkanRenderer::createGraphicsPipelines()
 {
-	std::vector<std::shared_ptr<Mesh>> meshes;
-	for (int i = 0; i < 500; i++)
-	{
-		std::shared_ptr<Mesh> m(new Mesh(vertices));
-		m->setIndices(indices);
-		m->translate(glm::vec3(0.0, 10.0f*i, 0.f));
-		meshes.push_back(m);
-	}
+	
+	shader->initShaderPipeline(WIDTH,HEIGHT, swapChainExtent, renderPass, device);
 
-	std::shared_ptr <VulkanShader> shaderTemp(new VulkanShader(VShaderPath, FShaderPath, meshes));
-	shaderTemp->initShaderPipeline(WIDTH,HEIGHT, swapChainExtent, descriptorSetLayout, renderPass, device);
-
-	shader = shaderTemp;
 
 }
 
@@ -880,21 +897,7 @@ void VulkanRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDevice
 
 void VulkanRenderer::createDescriptorSetLayout()
 {
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
-
-	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
+	shader->createDescriptorSetLayout(device);
 }
 
 //Create uniform buffer for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -920,31 +923,14 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHESH TO DESCRIPTOR POOL SIZE
 void VulkanRenderer::createDescritorPool()
 {
-	VkDescriptorPoolSize poolSize{};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(swapChainImages.size()) * shader->getMeshes().size();
-	
-	VkDescriptorPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
-
-	poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size()) * shader->getMeshes().size();
-
-	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create descriptor pool!");
-	}
+	shader->createDescritorPool(device, swapChainImages.size());
 }
 
 //Create descriptor set for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 void VulkanRenderer::createDescriptorSet()
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->createDescriptorSets(swapChainImages, descriptorSetLayout, descriptorPool, device);
-	}
+	shader->createDescriptorSets(swapChainImages, device);
 }
 
 // --------------------------------------------------------- BasicVertex BUFFER ------------------------------------------------------------------------------------------
@@ -965,8 +951,30 @@ void VulkanRenderer::createIndexBuffer()
 	}
 }
 
+// --------------------------------------------------------- TEXTURE ------------------------------------------------------------------------------------------
+
 void VulkanRenderer::createTextureImage()
 {
+	for (auto& mesh : shader->getMeshes())
+	{
+		mesh->getTexture()->createTexture(device, physicalDevice, commandPool, graphicsQueue);
+	}
+}
+
+void VulkanRenderer::createTextureImageView()
+{
+	for (auto& mesh : shader->getMeshes())
+	{
+		mesh->getTexture()->createTextureImageView(device);
+	}
+}
+
+void VulkanRenderer::createTextureSampler()
+{
+	for (auto& mesh : shader->getMeshes())
+	{
+		mesh->getTexture()->createTextureSampler(device);
+	}
 }
 
 // --------------------------------------------------------- DRAWING ------------------------------------------------------------------------------------------
@@ -1186,7 +1194,7 @@ void VulkanRenderer::cleanup()
 {
 	cleanupSwapChain();
 
-	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(device, shader->getDescriptorSetLayout(), nullptr);
 	for (auto& mesh : shader->getMeshes())
 	{
 		vkDestroyBuffer(device, mesh->getIndexBuffer(), nullptr);

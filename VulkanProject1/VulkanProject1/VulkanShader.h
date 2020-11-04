@@ -13,7 +13,6 @@ public:
 
 	void initShaderPipeline(float WIDTH, float HEIGHT,
 							VkExtent2D SwapChainExtent,
-							VkDescriptorSetLayout descriptorSetLayout,
 							VkRenderPass renderPass,
 							VkDevice device);
 
@@ -22,6 +21,10 @@ public:
 	std::vector<char> readFile(std::string filepath);
 
 	VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
+	
+	void createDescriptorSetLayout(VkDevice device);
+	void createDescritorPool(VkDevice device, int swapChainSize);
+	void createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device);
 
 	void addMesh(std::shared_ptr<Mesh> meshToAdd);
 
@@ -29,16 +32,18 @@ public:
 
 	inline VkPipeline getPipeline() { return ShaderPipeline; }
 	inline VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
-
 	
-
+	inline VkDescriptorPool& getDescriptorPool() { return descriptorPool; }
+	inline VkDescriptorSetLayout& getDescriptorSetLayout() { return descriptorSetLayout; }
 
 	~VulkanShader();
 
 private:
 	VkPipeline ShaderPipeline;
 	VkPipelineLayout pipelineLayout;
-	
+
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout descriptorSetLayout;
 
 	std::string vertPath;
 	std::string fragPath;
