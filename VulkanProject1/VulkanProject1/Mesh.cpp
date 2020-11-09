@@ -1,4 +1,6 @@
 #include "Mesh.h"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
 Mesh::Mesh(std::vector<BasicVertex> verts)
 {
@@ -7,6 +9,46 @@ Mesh::Mesh(std::vector<BasicVertex> verts)
 		vertices.push_back(BasicVertex);
 	}
 	model = glm::mat4(1.0f);
+}
+
+Mesh::Mesh(std::string modelPath)
+{
+	tinyobj::attrib_t attribute;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, modelPath.c_str()))
+	{
+		throw std::runtime_error(warn + err);
+	}
+
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			BasicVertex vertex{};
+			
+			vertex.pos = {
+				attribute.vertices[3 * index.vertex_index + 0],
+				attribute.vertices[3 * index.vertex_index + 1],
+				attribute.vertices[3 * index.vertex_index + 2]
+			};
+
+			vertex.texCoord = {
+				attribute.texcoords[2 * index.texcoord_index + 0],
+				1.0f - attribute.texcoords[2 * index.texcoord_index + 1]
+			};
+			vertex.color = glm::vec3(1.0f);
+
+			vertices.push_back(vertex);
+			indices.push_back(indices.size());
+
+		}
+	}
+	model = glm::mat4(1.0f);
+	scale(glm::vec3(100, 100, 100));
+	rotate(glm::vec3(-1, 0 ,0));
 }
 
 void Mesh::setIndices(std::vector<uint16_t> indicesToSet)

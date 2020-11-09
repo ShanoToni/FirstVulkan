@@ -22,6 +22,9 @@ const uint32_t HEIGHT = 600;
 const std::string VShaderPath = "Shaders/vert.spv";
 const std::string FShaderPath = "Shaders/frag.spv";
 
+const std::string OBJPATH = "OBJs/viking_room.obj";
+const std::string OBJTEXPATH = "Textures/viking_room.png";
+
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 
@@ -204,16 +207,23 @@ void VulkanRenderer::initVulkan()
 
 void VulkanRenderer::setupScene()
 {
-	Texture tex = Texture(textureFile);
 	std::vector<std::shared_ptr<Mesh>> meshes;
-	for (int i = 0; i < 100; i++)
-	{
-		std::shared_ptr<Mesh> m(new Mesh(vertices));
-		m->setIndices(indices);
-		m->translate(glm::vec3(0.0, -50.0f * i, 0.f));
-		m->setTexture(std::make_shared<Texture>(tex));
-		meshes.push_back(m);
-	}
+
+	//Texture tex1 = Texture(textureFile);
+	//for (int i = 0; i < 1; i++)
+	//{
+	//	std::shared_ptr<Mesh> m(new Mesh(vertices));
+	//	m->setIndices(indices);
+	//	m->translate(glm::vec3(0.0, -50.0f * i, 0.f));
+	//	m->setTexture(std::make_shared<Texture>(tex1));
+	//	meshes.push_back(m);
+	//}
+
+	Texture tex = Texture(OBJTEXPATH);
+	std::shared_ptr<Mesh> m(new Mesh(OBJPATH));
+	m->setTexture(std::make_shared<Texture>(tex));
+	meshes.push_back(m);
+
 
 	std::shared_ptr <VulkanShader> shaderTemp(new VulkanShader(VShaderPath, FShaderPath, meshes));
 	shader = shaderTemp;

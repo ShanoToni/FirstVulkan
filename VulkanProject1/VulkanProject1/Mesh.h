@@ -55,6 +55,7 @@ class Mesh
 {
 public:
 	Mesh(std::vector<BasicVertex> verts);
+	Mesh(std::string modelPath);
 
 	void setIndices(std::vector<uint16_t> indicesToSet);
 	inline std::vector<uint16_t> getIndices() { return indices; }
