@@ -11,7 +11,7 @@
 
 #include <string>
 #include <stdexcept>
-
+#include "VulkanHelperFunctions.h"
 
 class Texture
 {
@@ -21,21 +21,7 @@ public:
 
 	void createTexture(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue);
 
-	void createImage(uint32_t widht, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VkDevice device, VkPhysicalDevice physicalDevice);
-
-	void createTextureImageView(VkDevice device);
-
 	void createTextureSampler(VkDevice device);
-
-	static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkDevice device, VkPhysicalDevice physicalDevice);
-
-	static void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue);
-	static VkCommandBuffer beginSingleTimeCommands(VkCommandPool commandPool, VkDevice device);
-	static void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue);
-
-	static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice);
-
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue);
 
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t heigth, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue);
 
@@ -44,7 +30,7 @@ public:
 	//GET AND SET
 	VkImageView& getTextureImageView() { return textureImageView; }
 	VkSampler& getTextureSampler() {return textureSampler;}
-
+	VkImage& getTextureImage() { return textureImage; }
 
 	~Texture();
 

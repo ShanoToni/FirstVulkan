@@ -125,16 +125,11 @@ private:
 
 	void createTextureSampler();
 
-	// ------------------------- TODO ---------------------------------------------------------
-	//1.for each shader
-	/*
-	void updateBasicVertexBuffer();
-	void updateIndexBuffer();
-	*/
-	//2.change the UBO to be contained by the shader and created there
-	//2. create the UBO data struct for each mesh and an update for each mesh in the renderer
-
-	//uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	//DEPTH DATA
+	void createDepthResource();
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	VkFormat findDepthFormat();
+	bool hasStencilComponet(VkFormat format);
 
 	//DRAWING
 	void createSyncObjects();
@@ -185,8 +180,6 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 
 	VkRenderPass renderPass;
-	//VkPipelineLayout pipelineLayout;
-	//VkPipeline graphicsPipeline;
 
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -199,20 +192,13 @@ private:
 	std::vector<VkFence> imagesInFlight;
 	size_t currentFrame = 0;
 
-	//VkBuffer vertexBuffer;
-	//VkDeviceMemory vertexBufferMemory;
-	//VkBuffer indexBuffer;
-	//VkDeviceMemory indexBufferMemory;
-	
-	//VkDescriptorPool descriptorPool;
-	//std::vector<VkDescriptorSet> descriptorSets;
-
-	//std::vector<VkBuffer> uniformBuffers;
-	//std::vector<VkDeviceMemory> uniformBuffersMemory;
-
 	VkDescriptorSetLayout descriptorSetLayout;
 
 	std::shared_ptr<VulkanShader> shader;
+
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
 	
 public:
 	bool framebufferResized = false;

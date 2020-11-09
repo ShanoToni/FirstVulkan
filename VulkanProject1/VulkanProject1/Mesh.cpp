@@ -42,7 +42,7 @@ void Mesh::createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	Texture::createBuffer(bufferSize,
+	VulkanHelperFunctions::createBuffer(bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		stagingBuffer, stagingBufferMemory, device, physicalDevice);
@@ -56,9 +56,9 @@ void Mesh::createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice
 
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	Texture::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, device, physicalDevice);
+	VulkanHelperFunctions::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, device, physicalDevice);
 
-	Texture::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, commandPool, device, graphicsQueue);
+	VulkanHelperFunctions::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, commandPool, device, graphicsQueue);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -70,16 +70,16 @@ void Mesh::createIndexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice,
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	Texture::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, device, physicalDevice);
+	VulkanHelperFunctions::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, device, physicalDevice);
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	Texture::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, device, physicalDevice);
+	VulkanHelperFunctions::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, device, physicalDevice);
 
-	Texture::copyBuffer(stagingBuffer, indexBuffer, bufferSize, commandPool, device, graphicsQueue);
+	VulkanHelperFunctions::copyBuffer(stagingBuffer, indexBuffer, bufferSize, commandPool, device, graphicsQueue);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -149,7 +149,7 @@ void Mesh::createUniformBuffers(std::vector<VkImage> swapChainImages, VkDevice d
 
 	for (size_t i = 0; i < swapChainImages.size(); i++)
 	{
-		Texture::createBuffer(bufferSize,
+		VulkanHelperFunctions::createBuffer(bufferSize,
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			uniformBuffers[i], uniformBuffersMemory[i], device, physicalDevice);
@@ -169,7 +169,7 @@ void Mesh::updateUniformBufferModel(VkDevice device, uint32_t currentImage)
 void Mesh::updateUniformBufferViewProj(uint32_t currentImage, Camera& cam, VkExtent2D swapChainExtent, VkDevice device)
 {
 	ubo.view = cam.getView();
-	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 1000.f);
+	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 999999.f);
 	ubo.proj[1][1] *= -1;
 	ubo.model = model;
 
