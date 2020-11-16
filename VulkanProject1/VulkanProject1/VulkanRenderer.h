@@ -11,7 +11,10 @@
 #include <chrono>
 #include <map>
 
-#include "VulkanShader.h"
+//#include "VulkanShader.h"
+//#include "VkShaderBase.h"
+
+#include "VkShaderTexture.h"
 
 struct QueueFamilyIndices
 {
@@ -194,7 +197,8 @@ private:
 
 	VkDescriptorSetLayout descriptorSetLayout;
 
-	std::shared_ptr<VulkanShader> shader;
+	std::shared_ptr<VkShaderTexture> shader;
+	//std::shared_ptr<VkShaderBase> shaderBase;
 
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;

@@ -29,14 +29,14 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 
 
 //--------------------------------------------- TESTING VALUES ----------------------------------------------------------------------------------
-const std::vector<BasicVertex> vertices = {
+const std::vector<Vertex> vertices = {
 	{{-40.5f, 0.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 	{{40.5f, 0.f, 40.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
 	{{40.5f, 0.f, -40.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
 	{{-40.5f, 0.f, -40.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
-const std::vector<BasicVertex> vertices2 = {
+const std::vector<Vertex> vertices2 = {
 	{{-40.5f, 5.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 	{{40.5f, 5.f, 40.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
 	{{40.5f, 5.f, -40.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
@@ -207,7 +207,7 @@ void VulkanRenderer::initVulkan()
 
 void VulkanRenderer::setupScene()
 {
-	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<std::shared_ptr<MeshTexture>> meshes;
 
 	//Texture tex1 = Texture(textureFile);
 	//for (int i = 0; i < 1; i++)
@@ -220,12 +220,12 @@ void VulkanRenderer::setupScene()
 	//}
 
 	Texture tex = Texture(OBJTEXPATH);
-	std::shared_ptr<Mesh> m(new Mesh(OBJPATH));
+	std::shared_ptr<MeshTexture> m(new MeshTexture(OBJPATH));
 	m->setTexture(std::make_shared<Texture>(tex));
 	meshes.push_back(m);
 
 
-	std::shared_ptr <VulkanShader> shaderTemp(new VulkanShader(VShaderPath, FShaderPath, meshes));
+	std::shared_ptr <VkShaderTexture> shaderTemp(new VkShaderTexture(VShaderPath, FShaderPath, meshes));
 	shader = shaderTemp;
 }
 
@@ -928,7 +928,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 {
 	for (auto& mesh : shader->getMeshes())
 	{
-		mesh->updateUniformBufferViewProj(currentImage, *camera, swapChainExtent, device);
+		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
 	}
 	
 }

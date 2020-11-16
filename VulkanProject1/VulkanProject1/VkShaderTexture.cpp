@@ -1,14 +1,6 @@
-#include "VulkanShader.h"
+#include "VkShaderTexture.h"
 
-VulkanShader::VulkanShader(std::string vert, std::string frag)
-{
-	vertPath = vert;
-	fragPath = frag;
-}
-
-VulkanShader::VulkanShader(std::string vert, std::string frag, std::vector<std::shared_ptr<Mesh>> meshesToAdd)
-	:VulkanShader(vert, frag)
-
+VkShaderTexture::VkShaderTexture(std::string vert, std::string frag, std::vector<std::shared_ptr<MeshTexture>> meshesToAdd) : VkShaderBase(vert, frag)
 {
 	for (auto m : meshesToAdd)
 	{
@@ -16,7 +8,7 @@ VulkanShader::VulkanShader(std::string vert, std::string frag, std::vector<std::
 	}
 }
 
-void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkRenderPass renderPass, VkDevice device)
+void VkShaderTexture::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkRenderPass renderPass, VkDevice device)
 {
 	auto vertShaderCode = readFile(vertPath);
 	auto fragShaderCode = readFile(fragPath);
@@ -44,8 +36,8 @@ void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swap
 	VkPipelineVertexInputStateCreateInfo BasicVertexInputInfo{};
 	BasicVertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-	auto bindingDescritption = BasicVertex::getBindingDescription();
-	auto attributeDescription = BasicVertex::getAttributeDescriptions();
+	auto bindingDescritption = Vertex::getBindingDescription();
+	auto attributeDescription = Vertex::getAttributeDescriptionsPosColTex();
 
 	BasicVertexInputInfo.vertexBindingDescriptionCount = 1;
 	BasicVertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
@@ -160,7 +152,7 @@ void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swap
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
 	pipelineInfo.pStages = shaderStages;
-	
+
 	pipelineInfo.pVertexInputState = &BasicVertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
@@ -186,45 +178,7 @@ void VulkanShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D Swap
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-
-std::vector<char> VulkanShader::readFile(std::string filepath)
-{
-	std::ifstream file(filepath, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open())
-	{
-		throw std::runtime_error("failed to open file");
-	}
-
-	size_t fileSize = (size_t)file.tellg();
-	std::vector<char> buffer(fileSize);
-
-	file.seekg(0);
-	file.read(buffer.data(), fileSize);
-
-	file.close();
-
-	return buffer;
-}
-
-VkShaderModule VulkanShader::createShaderModule(const std::vector<char>& code, VkDevice device)
-{
-	VkShaderModuleCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = code.size();
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-
-	VkShaderModule shaderModule;
-
-	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create shader module");
-	}
-
-	return shaderModule;
-}
-
-void VulkanShader::createDescriptorSetLayout(VkDevice device)
+void VkShaderTexture::createDescriptorSetLayout(VkDevice device)
 {
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding = 0;
@@ -251,7 +205,7 @@ void VulkanShader::createDescriptorSetLayout(VkDevice device)
 	}
 }
 
-void VulkanShader::createDescritorPool(VkDevice device, int swapChainSize)
+void VkShaderTexture::createDescritorPool(VkDevice device, int swapChainSize)
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes{};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -272,7 +226,7 @@ void VulkanShader::createDescritorPool(VkDevice device, int swapChainSize)
 	}
 }
 
-void VulkanShader::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device)
+void VkShaderTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device)
 {
 	for (auto& mesh : getMeshes())
 	{
@@ -280,13 +234,7 @@ void VulkanShader::createDescriptorSets(std::vector<VkImage> swapChainImages, Vk
 	}
 }
 
-void VulkanShader::addMesh(std::shared_ptr<Mesh> meshToAdd)
+void VkShaderTexture::addMesh(std::shared_ptr<MeshTexture> meshToAdd)
 {
 	meshes.push_back(meshToAdd);
-}
-
-
-VulkanShader::~VulkanShader()
-{
-
 }

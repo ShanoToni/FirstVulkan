@@ -1,24 +1,30 @@
-#include "Mesh.h"
+#include "MeshBase.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-Mesh::Mesh(std::vector<BasicVertex> verts)
+MeshBase::MeshBase()
 {
-	for (auto BasicVertex : verts)
+	model = glm::mat4(1.0f);
+}
+
+MeshBase::MeshBase(std::vector<Vertex> meshVertices)
+{
+	for (auto Vertex : meshVertices)
 	{
-		vertices.push_back(BasicVertex);
+		vertices.push_back(Vertex);
 	}
 	model = glm::mat4(1.0f);
 }
 
-Mesh::Mesh(std::string modelPath)
+MeshBase::MeshBase(std::string filePath)
 {
 	tinyobj::attrib_t attribute;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	if (!tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, modelPath.c_str()))
+	if (!tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, filePath.c_str()))
 	{
 		throw std::runtime_error(warn + err);
 	}
@@ -27,8 +33,8 @@ Mesh::Mesh(std::string modelPath)
 	{
 		for (const auto& index : shape.mesh.indices)
 		{
-			BasicVertex vertex{};
-			
+			Vertex vertex{};
+
 			vertex.pos = {
 				attribute.vertices[3 * index.vertex_index + 0],
 				attribute.vertices[3 * index.vertex_index + 1],
@@ -39,6 +45,11 @@ Mesh::Mesh(std::string modelPath)
 				attribute.texcoords[2 * index.texcoord_index + 0],
 				1.0f - attribute.texcoords[2 * index.texcoord_index + 1]
 			};
+			vertex.normal = {
+				attribute.vertices[3 * index.normal_index + 0],
+				attribute.vertices[3 * index.normal_index + 1],
+				attribute.vertices[3 * index.normal_index + 2]
+			};
 			vertex.color = glm::vec3(1.0f);
 
 			vertices.push_back(vertex);
@@ -48,37 +59,28 @@ Mesh::Mesh(std::string modelPath)
 	}
 	model = glm::mat4(1.0f);
 	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0 ,0));
+	rotate(glm::vec3(-1, 0, 0));
 }
 
-void Mesh::setIndices(std::vector<uint16_t> indicesToSet)
-{
-	for (auto index : indicesToSet)
-	{
-		indices.push_back(index);
-	}
-}
-
-void Mesh::translate(glm::vec3 translationVector)
+void MeshBase::translate(glm::vec3 translationVector)
 {
 	model = glm::translate(model, translationVector);
 	ubo.model = model;
 }
 
-void Mesh::rotate(glm::vec3 rotationVector)
+void MeshBase::rotate(glm::vec3 rotationVector)
 {
 	model = glm::rotate(model, glm::radians(90.f), rotationVector);
 	ubo.model = model;
 }
 
-void Mesh::scale(glm::vec3 scaleVector)
+void MeshBase::scale(glm::vec3 scaleVector)
 {
 	model = glm::scale(model, scaleVector);
 	ubo.model = model;
 }
 
-
-void Mesh::createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue)
+void MeshBase::createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue)
 {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -106,7 +108,7 @@ void Mesh::createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-void Mesh::createIndexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue)
+void MeshBase::createIndexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue)
 {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
@@ -127,8 +129,7 @@ void Mesh::createIndexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice,
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-
-void Mesh::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
+void MeshBase::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
 {
 	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -150,12 +151,7 @@ void Mesh::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescript
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(BasicUBO);
 
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = texture->getTextureImageView();
-		imageInfo.sampler = texture->getTextureSampler();
-
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = descriptorSet;
@@ -167,22 +163,11 @@ void Mesh::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescript
 		descriptorWrites[0].pImageInfo = nullptr;
 		descriptorWrites[0].pTexelBufferView = nullptr;
 
-
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].dstSet = descriptorSet;
-		descriptorWrites[1].dstBinding = 1;
-		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].pBufferInfo = &bufferInfo;
-		descriptorWrites[1].pImageInfo = &imageInfo;
-		descriptorWrites[1].pTexelBufferView = nullptr;
-
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
-void Mesh::createUniformBuffers(std::vector<VkImage> swapChainImages, VkDevice device, VkPhysicalDevice physicalDevice)
+void MeshBase::createUniformBuffers(std::vector<VkImage> swapChainImages, VkDevice device, VkPhysicalDevice physicalDevice)
 {
 	VkDeviceSize bufferSize = sizeof(BasicUBO);
 
@@ -198,18 +183,10 @@ void Mesh::createUniformBuffers(std::vector<VkImage> swapChainImages, VkDevice d
 	}
 }
 
-void Mesh::updateUniformBufferModel(VkDevice device, uint32_t currentImage)
+void MeshBase::updateUniformBuffer(uint32_t currentImage, Camera& cam, VkExtent2D swapChainExtent, VkDevice device)
 {
 	ubo.model = model;
 
-	void* data;
-	vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
-}
-
-void Mesh::updateUniformBufferViewProj(uint32_t currentImage, Camera& cam, VkExtent2D swapChainExtent, VkDevice device)
-{
 	ubo.view = cam.getView();
 	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 999999.f);
 	ubo.proj[1][1] *= -1;
@@ -221,6 +198,10 @@ void Mesh::updateUniformBufferViewProj(uint32_t currentImage, Camera& cam, VkExt
 	vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
 }
 
-Mesh::~Mesh()
+void MeshBase::setIndices(std::vector<uint16_t> indicesToSet)
 {
+	for (auto index : indicesToSet)
+	{
+		indices.push_back(index);
+	}
 }
