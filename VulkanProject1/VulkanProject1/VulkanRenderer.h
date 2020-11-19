@@ -101,9 +101,6 @@ private:
 
 	void createCommandBuffers();
 
-	//Buffer
-	/*void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);*/
-
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	//Uniform Buffers
@@ -138,6 +135,24 @@ private:
 	void createSyncObjects();
 
 	void drawFrame();
+
+	// OFFSCREEN DRAWING
+	void createOffscreen();
+
+	//OFFSCREEN DRAWING VARS
+	VkFramebuffer offFrameBuffer;
+
+	VkImage offImageColor;
+	VkDeviceMemory offImageColorMemory;
+	VkImageView offImageColorView;
+
+	VkImage offImageDepth;
+	VkDeviceMemory offImageDepthMemory;
+	VkImageView offImageDepthView;
+
+	VkRenderPass offRenderPass;
+	VkSampler offSampler;
+	VkDescriptorImageInfo offDescriptor;
 
 	//Vulkan Checks
 	void checkExtentionSupport();
