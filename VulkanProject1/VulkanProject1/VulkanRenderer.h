@@ -15,6 +15,7 @@
 //#include "VkShaderBase.h"
 
 #include "VkShaderTexture.h"
+#include "ScreenQuadShader.h"
 
 struct QueueFamilyIndices
 {
@@ -213,7 +214,7 @@ private:
 	VkDescriptorSetLayout descriptorSetLayout;
 
 	std::shared_ptr<VkShaderTexture> shader;
-	//std::shared_ptr<VkShaderBase> shaderBase;
+	std::shared_ptr<ScreenQuadShader> shaderScreenQuad;
 
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;

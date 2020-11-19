@@ -19,8 +19,12 @@ const std::vector<const char*> deviceExtensions = {
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-const std::string VShaderPath = "Shaders/vert.spv";
-const std::string FShaderPath = "Shaders/frag.spv";
+const std::string VShaderPath = "Shaders/TextureShaderVert.spv";
+const std::string FShaderPath = "Shaders/TextureShaderFrag.spv";
+
+const std::string ScreenVShaderPath = "Shaders/ScreenShaderVert.spv";
+const std::string ScreenFShaderPath = "Shaders/ScreenShaderFrag.spv";
+
 
 const std::string OBJPATH = "OBJs/viking_room.obj";
 const std::string OBJTEXPATH = "Textures/viking_room.png";
@@ -44,6 +48,15 @@ const std::vector<Vertex> vertices2 = {
 };
 
 const std::vector<uint16_t> indices = {	0, 1, 2, 2, 3, 0 };
+
+const std::vector<Vertex> screenQuadVertices = {
+	{{-1, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{-1.0f, 1.f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+	{{1.0f, 1.f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}
+};
+
+const std::vector<uint16_t> screenIndices = { 0, 1, 2, 1, 3, 2 };
 
 std::string textureFile = "Textures/texture.jpg";
 
@@ -74,26 +87,6 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 }
 
 //--------------------------------------------STATIC FUNCTIONS-------------------------------------------------
-
-static std::vector<char> readFile(const std::string& filename)
-{
-	std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open())
-	{
-		throw std::runtime_error("failed to open file");
-	}
-
-	size_t fileSize = (size_t)file.tellg();
-	std::vector<char> buffer(fileSize);
-
-	file.seekg(0);
-	file.read(buffer.data(), fileSize);
-
-	file.close();
-
-	return buffer;
-}
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -228,6 +221,14 @@ void VulkanRenderer::setupScene()
 
 	std::shared_ptr <VkShaderTexture> shaderTemp(new VkShaderTexture(VShaderPath, FShaderPath, meshes));
 	shader = shaderTemp;
+
+	std::vector<std::shared_ptr<ScreenQuadMesh>> screenQuad;
+	std::shared_ptr<ScreenQuadMesh> quad(new ScreenQuadMesh(screenQuadVertices));
+	quad->setIndices(screenIndices);
+	screenQuad.push_back(quad);
+
+	std::shared_ptr<ScreenQuadShader> screenShaderTemp(new ScreenQuadShader(ScreenVShaderPath, ScreenFShaderPath, screenQuad));
+	shaderScreenQuad = screenShaderTemp;
 }
 
 void VulkanRenderer::mainLoop()
@@ -752,6 +753,8 @@ void VulkanRenderer::createGraphicsPipelines()
 	
 	shader->initShaderPipeline(WIDTH,HEIGHT, swapChainExtent, renderPass, device);
 
+	shaderScreenQuad->initShaderPipeline(WIDTH, HEIGHT, swapChainExtent, renderPass, device);
+
 
 }
 
@@ -830,22 +833,25 @@ void VulkanRenderer::createCommandBuffers()
 			throw std::runtime_error("Failed to begin recording to command buffer!");
 		}
 
+
+		// ------------------------------------------------------------ OFFSCREEN RENDER FIRST-----------------------------------------------
+
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass;
-		renderPassInfo.framebuffer = swapChainFramebuffers[i];
+		renderPassInfo.renderPass = offRenderPass ;
+		renderPassInfo.framebuffer = offFrameBuffer;
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChainExtent;
 
 		std::array<VkClearValue, 2> clearValues{};
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-		clearValues[1].depthStencil = { 1.0f, 0};
+		clearValues[1].depthStencil = { 1.0f, 0 };
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		//--------------------------------------------------SIMPLE SHADER ---------------------------------------------------
+		//--------------------------------------------------Texture SHADER ---------------------------------------------------
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
 		for (auto& mesh : shader->getMeshes())
 		{
@@ -860,9 +866,41 @@ void VulkanRenderer::createCommandBuffers()
 
 			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
 		}
+		vkCmdEndRenderPass(commandBuffers[i]);
 
-		
+		//-------------------------------------------------- SCREEN QUAD  ---------------------------------------------------
 
+		//VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.framebuffer = swapChainFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = swapChainExtent;
+
+		//std::array<VkClearValue, 2> clearValues{};
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0};
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
+		shaderScreenQuad->getMeshes()[0]->setScreenTexture(offImageColorView, offSampler);
+		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		//--------------------------------------------------SCREEN SHADER ---------------------------------------------------
+
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderScreenQuad->getPipeline());
+		for (auto& mesh : shaderScreenQuad->getMeshes())
+		{
+			VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };
+			VkDeviceSize offsets[] = { 0 };
+
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+			vkCmdBindIndexBuffer(commandBuffers[i], mesh->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderScreenQuad->getPipelineLayout(), 0, 1, &mesh->getDescriptorSets(), 0, nullptr);
+
+			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
+		}
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
@@ -916,12 +954,19 @@ void VulkanRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDevice
 void VulkanRenderer::createDescriptorSetLayout()
 {
 	shader->createDescriptorSetLayout(device);
+	
+	shaderScreenQuad->createDescriptorSetLayout(device);
 }
 
 //Create uniform buffer for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void VulkanRenderer::createUniformBuffers()
 {
 	for (auto & mesh : shader->getMeshes())
+	{
+		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
+	}
+
+	for (auto& mesh : shaderScreenQuad->getMeshes())
 	{
 		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
 	}
@@ -934,14 +979,22 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 	{
 		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
 	}
+
+	for (auto& mesh : shaderScreenQuad->getMeshes())
+	{
+		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
+	}
 	
+
 }
 
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHESH TO DESCRIPTOR POOL SIZE
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHE TO DESCRIPTOR POOL SIZE
 void VulkanRenderer::createDescritorPool()
 {
 	shader->createDescritorPool(device, swapChainImages.size());
+	
+	shaderScreenQuad->createDescritorPool(device, swapChainImages.size());
 }
 
 //Create descriptor set for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -949,6 +1002,8 @@ void VulkanRenderer::createDescritorPool()
 void VulkanRenderer::createDescriptorSet()
 {
 	shader->createDescriptorSets(swapChainImages, device);
+
+	shaderScreenQuad->createDescriptorSets(swapChainImages, device);
 }
 
 // --------------------------------------------------------- BasicVertex BUFFER ------------------------------------------------------------------------------------------
@@ -959,11 +1014,21 @@ void VulkanRenderer::createVertexBuffer()
 	{
 		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
 	}
+
+	for (auto& mesh : shaderScreenQuad->getMeshes())
+	{
+		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
+	}
 }
 
 void VulkanRenderer::createIndexBuffer()
 {
 	for (auto& mesh : shader->getMeshes())
+	{
+		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
+	}
+
+	for (auto& mesh : shaderScreenQuad->getMeshes())
 	{
 		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
 	}
@@ -1154,12 +1219,12 @@ void VulkanRenderer::createOffscreen()
 	VkFormat depthFormat = findDepthFormat();
 
 	VulkanHelperFunctions::createImage(swapChainExtent.width, swapChainExtent.height,
-										VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+										VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 										VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 										offImageColor, offImageColorMemory, device, physicalDevice);
 	
-	 offImageColorView = VulkanHelperFunctions::createImageView(offImageColor, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
+	 offImageColorView = VulkanHelperFunctions::createImageView(offImageColor, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
 
 	// CREATE SAMPLER TO SAMPLER FROM THE ATTACHMENT IN THE FRAGMENT SHADER
 	 VkSamplerCreateInfo samplerInfo{};
@@ -1198,7 +1263,7 @@ void VulkanRenderer::createOffscreen()
 		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		 offImageDepth, offImageDepthMemory, device, physicalDevice);
 
-	 offImageDepthView = VulkanHelperFunctions::createImageView(offImageDepth, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, device);
+	 offImageDepthView = VulkanHelperFunctions::createImageView(offImageDepth, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, device);
 
 	 // CREATE SEPARATE OFFSCREEN RENDER PASS WHOO!
 
@@ -1290,6 +1355,8 @@ void VulkanRenderer::createOffscreen()
 	 {
 		 throw std::runtime_error("Failed to create offscreen framebuffer!");
 	 }
+
+	 shaderScreenQuad->getMeshes()[0]->setScreenTexture(offImageColorView, offSampler);
 
 }
 

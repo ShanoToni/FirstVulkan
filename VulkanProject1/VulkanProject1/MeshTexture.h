@@ -1,8 +1,6 @@
 #pragma once
 #include "MeshBase.h"
 
-
-
 class MeshTexture :
     public MeshBase
 {

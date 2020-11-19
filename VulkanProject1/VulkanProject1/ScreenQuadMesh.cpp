@@ -1,16 +1,14 @@
-#include "MeshTexture.h"
+#include "ScreenQuadMesh.h"
 
-
-MeshTexture::MeshTexture(std::vector<Vertex> verts) : MeshBase(verts)
-{
-	
-}
-
-MeshTexture::MeshTexture(std::string modelPath) : MeshBase(modelPath)
+ScreenQuadMesh::ScreenQuadMesh(std::vector<Vertex> verts) : MeshBase(verts)
 {
 }
 
-void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
+ScreenQuadMesh::ScreenQuadMesh(std::string modelPath) : MeshBase(modelPath)
+{
+}
+
+void ScreenQuadMesh::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
 {
 	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -34,8 +32,8 @@ void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkD
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = texture->getTextureImageView();
-		imageInfo.sampler = texture->getTextureSampler();
+		imageInfo.imageView = screenQuadImageView;
+		imageInfo.sampler = screenQuadSampler;
 
 		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -63,5 +61,3 @@ void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkD
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
-
-

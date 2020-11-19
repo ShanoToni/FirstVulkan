@@ -158,6 +158,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="MeshBase.cpp" />
     <ClCompile Include="MeshTexture.cpp" />
+    <ClCompile Include="ScreenQuadMesh.cpp" />
+    <ClCompile Include="ScreenQuadShader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VkShaderBase.cpp" />
     <ClCompile Include="VkShaderTexture.cpp" />
@@ -169,6 +171,8 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="MeshBase.h" />
     <ClInclude Include="MeshTexture.h" />
+    <ClInclude Include="ScreenQuadMesh.h" />
+    <ClInclude Include="ScreenQuadShader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VkShaderBase.h" />
     <ClInclude Include="VkShaderTexture.h" />
