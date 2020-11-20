@@ -1,19 +1,14 @@
-#include "MeshTexture.h"
+#include "MeshSkybox.h"
 
-
-MeshTexture::MeshTexture(std::vector<Vertex> verts) : MeshBase(verts)
+MeshSkybox::MeshSkybox(std::vector<Vertex> verts) : MeshBase(verts)
 {
-	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0, 0));
 }
 
-MeshTexture::MeshTexture(std::string modelPath) : MeshBase(modelPath)
+MeshSkybox::MeshSkybox(std::string modelPath) : MeshBase(modelPath)
 {
-	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0, 0));
 }
 
-void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
+void MeshSkybox::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
 {
 	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -37,8 +32,8 @@ void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkD
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = texture->getTextureImageView();
-		imageInfo.sampler = texture->getTextureSampler();
+		imageInfo.imageView = skybox->getSkyboxImageView();
+		imageInfo.sampler = skybox->getSkyboxSampler();
 
 		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -66,5 +61,3 @@ void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkD
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
-
-

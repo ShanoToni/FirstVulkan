@@ -15,7 +15,11 @@ class VulkanHelperFunctions
 public:
 	static void createImage(uint32_t widht, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VkDevice device, VkPhysicalDevice physicalDevice);
 
+	static void createSkybox(uint32_t widht, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VkDevice device, VkPhysicalDevice physicalDevice);
+
 	static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkDevice device);
+
+	static VkImageView createSkyboxView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkDevice device);
 
 	static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice);
 
@@ -27,9 +31,11 @@ public:
 
 	static void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue);
 
-	static void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue);
+	static void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandPool commandPool, VkDevice device, VkQueue graphicsQueue, int layerCount);
 
 	static bool hasStencilComponent(VkFormat format);
+
+	static unsigned char* loadTextureData(std::string FilePath, int& texWidth, int& texHeight, int& texChannels);
 
 };
 

@@ -16,6 +16,8 @@
 
 #include "VkShaderTexture.h"
 #include "ScreenQuadShader.h"
+#include "OffscreenBuffer.h"
+#include "VkShaderSkybox.h"
 
 struct QueueFamilyIndices
 {
@@ -139,9 +141,10 @@ private:
 
 	// OFFSCREEN DRAWING
 	void createOffscreen();
+	OffscreenBuffer offScreen;
 
 	//OFFSCREEN DRAWING VARS
-	VkFramebuffer offFrameBuffer;
+	/*VkFramebuffer offFrameBuffer;
 
 	VkImage offImageColor;
 	VkDeviceMemory offImageColorMemory;
@@ -153,7 +156,7 @@ private:
 
 	VkRenderPass offRenderPass;
 	VkSampler offSampler;
-	VkDescriptorImageInfo offDescriptor;
+	VkDescriptorImageInfo offDescriptor;*/
 
 	//Vulkan Checks
 	void checkExtentionSupport();
@@ -214,6 +217,7 @@ private:
 	VkDescriptorSetLayout descriptorSetLayout;
 
 	std::shared_ptr<VkShaderTexture> shader;
+	std::shared_ptr<VkShaderSkybox> skyboxShader;
 	std::shared_ptr<ScreenQuadShader> shaderScreenQuad;
 
 	VkImage depthImage;

@@ -1,6 +1,6 @@
-#include "ScreenQuadShader.h"
+#include "VkShaderSkybox.h"
 
-ScreenQuadShader::ScreenQuadShader(std::string vert, std::string frag, std::vector<std::shared_ptr<ScreenQuadMesh>> meshesToAdd) : VkShaderBase(vert, frag)
+VkShaderSkybox::VkShaderSkybox(std::string vert, std::string frag, std::vector<std::shared_ptr<MeshSkybox>> meshesToAdd) : VkShaderBase(vert, frag)
 {
 	for (auto m : meshesToAdd)
 	{
@@ -8,7 +8,7 @@ ScreenQuadShader::ScreenQuadShader(std::string vert, std::string frag, std::vect
 	}
 }
 
-void ScreenQuadShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkRenderPass renderPass, VkDevice device)
+void VkShaderSkybox::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D SwapChainExtent, VkRenderPass renderPass, VkDevice device)
 {
 	auto vertShaderCode = readFile(vertPath);
 	auto fragShaderCode = readFile(fragPath);
@@ -55,7 +55,7 @@ void ScreenQuadShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D 
 	viewport.y = 0.0f;
 	viewport.width = WIDTH;
 	viewport.height = HEIGHT;
-	viewport.minDepth = 0.0;
+	viewport.minDepth = 0.1;
 	viewport.maxDepth = 1.0;
 
 	VkRect2D scissor{};
@@ -76,7 +76,7 @@ void ScreenQuadShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D 
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
+	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
 	rasterizer.depthBiasEnable = VK_FALSE;
@@ -96,8 +96,8 @@ void ScreenQuadShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D 
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthTestEnable = VK_FALSE;
+	depthStencil.depthWriteEnable = VK_FALSE;
 	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
@@ -178,16 +178,24 @@ void ScreenQuadShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D 
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-void ScreenQuadShader::createDescriptorSetLayout(VkDevice device)
+void VkShaderSkybox::createDescriptorSetLayout(VkDevice device)
 {
+
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+
 	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.binding = 0;
+	samplerLayoutBinding.binding = 1;
 	samplerLayoutBinding.descriptorCount = 1;
 	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	samplerLayoutBinding.pImmutableSamplers = nullptr;
 	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	std::array<VkDescriptorSetLayoutBinding, 1> bindings = { samplerLayoutBinding };
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -198,11 +206,13 @@ void ScreenQuadShader::createDescriptorSetLayout(VkDevice device)
 	}
 }
 
-void ScreenQuadShader::createDescritorPool(VkDevice device, int swapChainSize)
+void VkShaderSkybox::createDescritorPool(VkDevice device, int swapChainSize)
 {
-	std::array<VkDescriptorPoolSize, 1> poolSizes{};
-	poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;;
+	std::array<VkDescriptorPoolSize, 2> poolSizes{};
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;;
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -217,7 +227,7 @@ void ScreenQuadShader::createDescritorPool(VkDevice device, int swapChainSize)
 	}
 }
 
-void ScreenQuadShader::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device)
+void VkShaderSkybox::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device)
 {
 	for (auto& mesh : getMeshes())
 	{
@@ -225,7 +235,7 @@ void ScreenQuadShader::createDescriptorSets(std::vector<VkImage> swapChainImages
 	}
 }
 
-void ScreenQuadShader::addMesh(std::shared_ptr<ScreenQuadMesh> meshToAdd)
+void VkShaderSkybox::addMesh(std::shared_ptr<MeshSkybox> meshToAdd)
 {
 	meshes.push_back(meshToAdd);
 }

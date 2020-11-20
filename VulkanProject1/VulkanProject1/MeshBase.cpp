@@ -58,8 +58,7 @@ MeshBase::MeshBase(std::string filePath)
 		}
 	}
 	model = glm::mat4(1.0f);
-	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0, 0));
+
 }
 
 void MeshBase::translate(glm::vec3 translationVector)

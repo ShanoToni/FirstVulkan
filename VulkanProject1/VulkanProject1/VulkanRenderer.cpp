@@ -22,10 +22,6 @@ const uint32_t HEIGHT = 600;
 const std::string VShaderPath = "Shaders/TextureShaderVert.spv";
 const std::string FShaderPath = "Shaders/TextureShaderFrag.spv";
 
-const std::string ScreenVShaderPath = "Shaders/ScreenShaderVert.spv";
-const std::string ScreenFShaderPath = "Shaders/ScreenShaderFrag.spv";
-
-
 const std::string OBJPATH = "OBJs/viking_room.obj";
 const std::string OBJTEXPATH = "Textures/viking_room.png";
 
@@ -49,6 +45,10 @@ const std::vector<Vertex> vertices2 = {
 
 const std::vector<uint16_t> indices = {	0, 1, 2, 2, 3, 0 };
 
+
+const std::string ScreenVShaderPath = "Shaders/ScreenShaderVert.spv";
+const std::string ScreenFShaderPath = "Shaders/ScreenShaderFrag.spv";
+
 const std::vector<Vertex> screenQuadVertices = {
 	{{-1, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 	{{1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
@@ -59,6 +59,36 @@ const std::vector<Vertex> screenQuadVertices = {
 const std::vector<uint16_t> screenIndices = { 0, 1, 2, 1, 3, 2 };
 
 std::string textureFile = "Textures/texture.jpg";
+
+
+const std::string SkyboxVShaderPath = "Shaders/SkyboxShaderVert.spv";
+const std::string SkyboxFShaderPath = "Shaders/SkyboxShaderFrag.spv";
+
+const std::vector<Vertex> skyboxVerts = {
+	{{-1.0f, 1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{-1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+	{{1.0f,  1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-1.0f, -1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-1.0f,  1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{1.0f, -1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{ 1.0f,  1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+};
+
+
+const std::vector<uint16_t> skyboxIndices = {0,1,2,		2,3,0,
+											 4,1,0,		0,5,4,
+											 2,6,7,		7,3,2,
+											 4,5,7,		7,6,4,
+											 0,3,7,		7,5,0,
+											 1,4,2,		2,4,6};
+
+std::string skyboxFront = "Textures/sh_ft.png";
+std::string skyboxBack = "Textures/sh_bk.png";
+std::string skyboxUp = "Textures/sh_up.png";
+std::string skyboxDown = "Textures/sh_dn.png";
+std::string skyboxRight = "Textures/sh_rt.png";
+std::string skyboxLeft = "Textures/sh_lf.png";
 
 //--------------------------------------------ADDITIONAL PROXY FUNCTION FOR VALIDATION LAYERS-------------------------------------------------
 
@@ -201,18 +231,9 @@ void VulkanRenderer::initVulkan()
 
 void VulkanRenderer::setupScene()
 {
+
+	// TEXTURED OBJECTS
 	std::vector<std::shared_ptr<MeshTexture>> meshes;
-
-	//Texture tex1 = Texture(textureFile);
-	//for (int i = 0; i < 1; i++)
-	//{
-	//	std::shared_ptr<Mesh> m(new Mesh(vertices));
-	//	m->setIndices(indices);
-	//	m->translate(glm::vec3(0.0, -50.0f * i, 0.f));
-	//	m->setTexture(std::make_shared<Texture>(tex1));
-	//	meshes.push_back(m);
-	//}
-
 	Texture tex = Texture(OBJTEXPATH);
 	std::shared_ptr<MeshTexture> m(new MeshTexture(OBJPATH));
 	m->setTexture(std::make_shared<Texture>(tex));
@@ -222,6 +243,7 @@ void VulkanRenderer::setupScene()
 	std::shared_ptr <VkShaderTexture> shaderTemp(new VkShaderTexture(VShaderPath, FShaderPath, meshes));
 	shader = shaderTemp;
 
+	// SCREEN QUAD
 	std::vector<std::shared_ptr<ScreenQuadMesh>> screenQuad;
 	std::shared_ptr<ScreenQuadMesh> quad(new ScreenQuadMesh(screenQuadVertices));
 	quad->setIndices(screenIndices);
@@ -229,6 +251,28 @@ void VulkanRenderer::setupScene()
 
 	std::shared_ptr<ScreenQuadShader> screenShaderTemp(new ScreenQuadShader(ScreenVShaderPath, ScreenFShaderPath, screenQuad));
 	shaderScreenQuad = screenShaderTemp;
+
+	//SKYBOX
+	std::vector<std::string> paths;
+	paths.push_back(skyboxFront);
+	paths.push_back(skyboxBack);
+	paths.push_back(skyboxUp);
+	paths.push_back(skyboxDown);
+	paths.push_back(skyboxRight);
+	paths.push_back(skyboxLeft);
+
+	SkyBox skytex = SkyBox(paths);
+
+	std::vector<std::shared_ptr<MeshSkybox>> skymeshes;
+	std::shared_ptr<MeshSkybox> skymesh(new MeshSkybox(skyboxVerts));
+	skymesh->setIndices(skyboxIndices);
+
+	skymesh->setSkybox(std::make_shared<SkyBox>(skytex));
+	skymesh->scale(glm::vec3(500.f));
+	skymeshes.push_back(skymesh);
+
+	std::shared_ptr<VkShaderSkybox> skyboxShadertemp(new VkShaderSkybox(SkyboxVShaderPath, SkyboxFShaderPath, skymeshes));
+	skyboxShader = skyboxShadertemp;
 }
 
 void VulkanRenderer::mainLoop()
@@ -641,14 +685,14 @@ void VulkanRenderer::cleanupSwapChain()
 		vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
 	}
 
-	vkDestroyFramebuffer(device, offFrameBuffer, nullptr);
+	vkDestroyFramebuffer(device, offScreen.getOffscreenFramebuffer(), nullptr);
 	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	
 	
 	vkDestroyPipeline(device, shader->getPipeline(), nullptr);
 	vkDestroyPipelineLayout(device, shader->getPipelineLayout(), nullptr);
 	
-	vkDestroyRenderPass(device, offRenderPass, nullptr);
+	vkDestroyRenderPass(device, offScreen.getOffscreenRenderPass(), nullptr);
 	vkDestroyRenderPass(device, renderPass, nullptr);
 
 	for (size_t i = 0; i < swapChainImageViews.size(); i++)
@@ -746,7 +790,7 @@ void VulkanRenderer::createRenderPass()
 	}
 }
 
-//------------------------------------------------------TESTING SUITE-------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------ !!! ADD NEW SHADER HERE !!! -------------------------------------------------------------------------------------------------------------------------
 
 void VulkanRenderer::createGraphicsPipelines()
 {
@@ -755,7 +799,7 @@ void VulkanRenderer::createGraphicsPipelines()
 
 	shaderScreenQuad->initShaderPipeline(WIDTH, HEIGHT, swapChainExtent, renderPass, device);
 
-
+	skyboxShader->initShaderPipeline(WIDTH, HEIGHT, swapChainExtent, renderPass, device);
 }
 
 
@@ -838,8 +882,8 @@ void VulkanRenderer::createCommandBuffers()
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = offRenderPass ;
-		renderPassInfo.framebuffer = offFrameBuffer;
+		renderPassInfo.renderPass = offScreen.getOffscreenRenderPass() ;
+		renderPassInfo.framebuffer = offScreen.getOffscreenFramebuffer();
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChainExtent;
 
@@ -850,6 +894,24 @@ void VulkanRenderer::createCommandBuffers()
 		renderPassInfo.pClearValues = clearValues.data();
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+
+		//-------------------------------------------------- SKYBOX SHADER ---------------------------------------------------
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxShader->getPipeline());
+		for (auto& mesh : skyboxShader->getMeshes())
+		{
+			VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };
+			VkDeviceSize offsets[] = { 0 };
+
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+			vkCmdBindIndexBuffer(commandBuffers[i], mesh->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxShader->getPipelineLayout(), 0, 1, &mesh->getDescriptorSets(), 0, nullptr);
+
+			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
+		}
+
 
 		//--------------------------------------------------Texture SHADER ---------------------------------------------------
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
@@ -868,6 +930,7 @@ void VulkanRenderer::createCommandBuffers()
 		}
 		vkCmdEndRenderPass(commandBuffers[i]);
 
+
 		//-------------------------------------------------- SCREEN QUAD  ---------------------------------------------------
 
 		//VkRenderPassBeginInfo renderPassInfo{};
@@ -882,7 +945,7 @@ void VulkanRenderer::createCommandBuffers()
 		clearValues[1].depthStencil = { 1.0f, 0};
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
-		shaderScreenQuad->getMeshes()[0]->setScreenTexture(offImageColorView, offSampler);
+		shaderScreenQuad->getMeshes()[0]->setScreenTexture(offScreen.getOffscreenColorImageView(), offScreen.getOffscreenSampler());
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		//--------------------------------------------------SCREEN SHADER ---------------------------------------------------
@@ -949,16 +1012,18 @@ void VulkanRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDevice
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-// --------------------------------------------------------- UNIFORM BUFFER ------------------------------------------------------------------------------------------
+// --------------------------------------------------------- UNIFORM BUFFER  !!! ADD NEW SHADER HERE !!! ------------------------------------------------------------------------------------------
 
 void VulkanRenderer::createDescriptorSetLayout()
 {
 	shader->createDescriptorSetLayout(device);
 	
 	shaderScreenQuad->createDescriptorSetLayout(device);
+
+	skyboxShader->createDescriptorSetLayout(device);
 }
 
-//Create uniform buffer for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//Create uniform buffer for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  !!! ADD NEW SHADER HERE !!!  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void VulkanRenderer::createUniformBuffers()
 {
 	for (auto & mesh : shader->getMeshes())
@@ -971,6 +1036,10 @@ void VulkanRenderer::createUniformBuffers()
 		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
 	}
 	
+	for (auto& mesh : skyboxShader->getMeshes())
+	{
+		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
+	}
 }
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
@@ -979,34 +1048,36 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 	{
 		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
 	}
-
-	for (auto& mesh : shaderScreenQuad->getMeshes())
+	for (auto& mesh : skyboxShader->getMeshes())
 	{
 		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
 	}
-	
 
 }
 
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHE TO DESCRIPTOR POOL SIZE
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHE TO DESCRIPTOR POOL SIZE  !!! ADD NEW SHADER HERE !!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void VulkanRenderer::createDescritorPool()
 {
 	shader->createDescritorPool(device, swapChainImages.size());
 	
 	shaderScreenQuad->createDescritorPool(device, swapChainImages.size());
+
+	skyboxShader->createDescritorPool(device, swapChainImages.size());
 }
 
-//Create descriptor set for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//Create descriptor set for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! !!! ADD NEW SHADER HERE !!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 void VulkanRenderer::createDescriptorSet()
 {
 	shader->createDescriptorSets(swapChainImages, device);
 
 	shaderScreenQuad->createDescriptorSets(swapChainImages, device);
+
+	skyboxShader->createDescriptorSets(swapChainImages, device);
 }
 
-// --------------------------------------------------------- BasicVertex BUFFER ------------------------------------------------------------------------------------------
+// --------------------------------------------------------- BasicVertex BUFFER -----------------------  !!! ADD NEW SHADER HERE !!!-------------------------------------------------------------------
 
 void VulkanRenderer::createVertexBuffer()
 {
@@ -1019,7 +1090,14 @@ void VulkanRenderer::createVertexBuffer()
 	{
 		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
 	}
+
+	for (auto& mesh : skyboxShader->getMeshes())
+	{
+		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
+	}
 }
+
+//!!!ADD NEW SHADER HERE !!!
 
 void VulkanRenderer::createIndexBuffer()
 {
@@ -1032,9 +1110,14 @@ void VulkanRenderer::createIndexBuffer()
 	{
 		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
 	}
+
+	for (auto& mesh : skyboxShader->getMeshes())
+	{
+		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
+	}
 }
 
-// --------------------------------------------------------- TEXTURE ------------------------------------------------------------------------------------------
+// --------------------------------------------------------- TEXTURE ------------------------- !!! ADD NEW SHADER HERE IF TEXTURED!!!-----------------------------------------------------------------
 
 void VulkanRenderer::createTextureImage()
 {
@@ -1042,13 +1125,25 @@ void VulkanRenderer::createTextureImage()
 	{
 		mesh->getTexture()->createTexture(device, physicalDevice, commandPool, graphicsQueue);
 	}
+
+	for (auto& mesh : skyboxShader->getMeshes())
+	{
+		mesh->getSkybox()->createSkybox(device, physicalDevice, commandPool, graphicsQueue);
+	}
 }
+
+//!!!ADD NEW SHADER HERE IF TEXTURED!!!
 
 void VulkanRenderer::createTextureImageView()
 {
 	for (auto& mesh : shader->getMeshes())
 	{
 		mesh->getTexture()->getTextureImageView() = VulkanHelperFunctions::createImageView(mesh->getTexture()->getTextureImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
+	}
+
+	for (auto& mesh : skyboxShader->getMeshes())
+	{
+		mesh->getSkybox()->getSkyboxImageView() = VulkanHelperFunctions::createSkyboxView(mesh->getSkybox()->getSkyboxImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
 	}
 }
 
@@ -1057,6 +1152,11 @@ void VulkanRenderer::createTextureSampler()
 	for (auto& mesh : shader->getMeshes())
 	{
 		mesh->getTexture()->createTextureSampler(device);
+	}
+
+	for (auto& mesh : skyboxShader->getMeshes())
+	{
+		mesh->getSkybox()->createSkyboxSampler(device);
 	}
 }
 
@@ -1216,147 +1316,9 @@ void VulkanRenderer::drawFrame()
 
 void VulkanRenderer::createOffscreen()
 {
-	VkFormat depthFormat = findDepthFormat();
+	offScreen = OffscreenBuffer();
 
-	VulkanHelperFunctions::createImage(swapChainExtent.width, swapChainExtent.height,
-										VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
-										VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-										offImageColor, offImageColorMemory, device, physicalDevice);
-	
-	 offImageColorView = VulkanHelperFunctions::createImageView(offImageColor, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
-
-	// CREATE SAMPLER TO SAMPLER FROM THE ATTACHMENT IN THE FRAGMENT SHADER
-	 VkSamplerCreateInfo samplerInfo{};
-
-	 samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	 samplerInfo.magFilter = VK_FILTER_LINEAR;
-	 samplerInfo.minFilter = VK_FILTER_LINEAR;
-	 samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	 samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	 samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-	 samplerInfo.anisotropyEnable = VK_TRUE;
-	 samplerInfo.maxAnisotropy = 16.f;
-
-	 samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	 samplerInfo.unnormalizedCoordinates = VK_FALSE;
-
-	 samplerInfo.compareEnable = VK_FALSE;
-	 samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-	 samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	 samplerInfo.mipLodBias = 0.0f;
-	 samplerInfo.minLod = 0.0f;
-	 samplerInfo.maxLod = 1.0f;
-
-	 if (vkCreateSampler(device, &samplerInfo, nullptr, &offSampler) != VK_SUCCESS)
-	 {
-		 throw std::runtime_error("failed to create texture sampler!");
-	 }
-
-	 // Depth stencil attachment
-
-	 VulkanHelperFunctions::createImage(swapChainExtent.width, swapChainExtent.height,
-		 depthFormat, VK_IMAGE_TILING_OPTIMAL,
-		 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		 offImageDepth, offImageDepthMemory, device, physicalDevice);
-
-	 offImageDepthView = VulkanHelperFunctions::createImageView(offImageDepth, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, device);
-
-	 // CREATE SEPARATE OFFSCREEN RENDER PASS WHOO!
-
-	 VkAttachmentDescription colorAttachment{};
-	 colorAttachment.format = swapChainImageFormat;
-	 colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-
-	 colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	 colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-
-	 colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	 colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	 colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	 colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	 VkAttachmentDescription depthAttachment{};
-	 depthAttachment.format = depthFormat;
-	 depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	 depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	 depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	 depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	 depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	 depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	 depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	 VkAttachmentReference colorAttachmentRef{};
-	 colorAttachmentRef.attachment = 0;
-	 colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	 VkAttachmentReference depthAttachmentRef{};
-	 depthAttachmentRef.attachment = 1;
-	 depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-
-	 VkSubpassDescription subpass{};
-	 subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	 subpass.colorAttachmentCount = 1;
-	 subpass.pColorAttachments = &colorAttachmentRef;
-	 subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	 std::array<VkSubpassDependency, 2 >  dependencies{};
-
-	 dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	 dependencies[0].dstSubpass = 0;
-	 dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	 dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	 dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	 dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	 dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	 dependencies[1].srcSubpass = 0;
-	 dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-	 dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	 dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	 dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	 dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	 dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	 std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-	 VkRenderPassCreateInfo renderPassInfo{};
-	 renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	 renderPassInfo.attachmentCount = 2;
-	 renderPassInfo.pAttachments = attachments.data();
-	 renderPassInfo.subpassCount = 1;
-	 renderPassInfo.pSubpasses = &subpass;
-	 renderPassInfo.dependencyCount = 2;
-	 renderPassInfo.pDependencies = dependencies.data();
-
-	 if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &offRenderPass) != VK_SUCCESS)
-	 {
-		 throw std::runtime_error("Failed to create offscreen render pass!");
-	 }
-
-	 VkImageView frameBufferAttachments[2];
-	 frameBufferAttachments[0] = offImageColorView;
-	 frameBufferAttachments[1] = offImageDepthView;
-
-	 VkFramebufferCreateInfo fbufCreateInfo{};
-	 fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	 fbufCreateInfo.renderPass = offRenderPass;
-	 fbufCreateInfo.attachmentCount = 2;
-	 fbufCreateInfo.pAttachments = frameBufferAttachments;
-	 fbufCreateInfo.width = swapChainExtent.width;
-	 fbufCreateInfo.height = swapChainExtent.height;
-	 fbufCreateInfo.layers = 1;
-
-	 if (vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offFrameBuffer) != VK_SUCCESS)
-	 {
-		 throw std::runtime_error("Failed to create offscreen framebuffer!");
-	 }
-
-	 shaderScreenQuad->getMeshes()[0]->setScreenTexture(offImageColorView, offSampler);
+	offScreen.createOffscreen(findDepthFormat(), swapChainExtent, device, physicalDevice, swapChainImageFormat, *shaderScreenQuad->getMeshes()[0]);
 
 }
 
