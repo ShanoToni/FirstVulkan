@@ -155,15 +155,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BlinnPhongMesh.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DirectionalLight.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="MeshBase.cpp" />
     <ClCompile Include="MeshSkybox.cpp" />
     <ClCompile Include="MeshTexture.cpp" />
     <ClCompile Include="OffscreenBuffer.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="ScreenQuadMesh.cpp" />
     <ClCompile Include="ScreenQuadShader.cpp" />
     <ClCompile Include="SkyBox.cpp" />
+    <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="VkBlinPhongShader.cpp" />
     <ClCompile Include="VkShaderBase.cpp" />
     <ClCompile Include="VkShaderSkybox.cpp" />
     <ClCompile Include="VkShaderTexture.cpp" />
@@ -172,15 +178,21 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BlinnPhongMesh.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="MeshBase.h" />
     <ClInclude Include="MeshSkybox.h" />
     <ClInclude Include="MeshTexture.h" />
     <ClInclude Include="OffscreenBuffer.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="ScreenQuadMesh.h" />
     <ClInclude Include="ScreenQuadShader.h" />
     <ClInclude Include="SkyBox.h" />
+    <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="VkBlinPhongShader.h" />
     <ClInclude Include="VkShaderBase.h" />
     <ClInclude Include="VkShaderSkybox.h" />
     <ClInclude Include="VkShaderTexture.h" />
