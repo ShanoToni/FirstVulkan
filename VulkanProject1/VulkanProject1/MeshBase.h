@@ -9,9 +9,9 @@
 
 
 struct BasicUBO {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
 };
 
 struct Vertex {
@@ -86,7 +86,7 @@ struct Vertex {
 		attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
 		attributeDescriptions[3].binding = 0;
-		attributeDescriptions[3].location = 1;
+		attributeDescriptions[3].location = 3;
 		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[3].offset = offsetof(Vertex, normal);
 

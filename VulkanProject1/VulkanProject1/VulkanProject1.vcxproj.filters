@@ -90,6 +90,9 @@
     <ClCompile Include="BlinnPhongMesh.cpp">
       <Filter>Source Files\Mesh Source</Filter>
     </ClCompile>
+    <ClCompile Include="SceneBuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VulkanRenderer.h">
@@ -151,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="BlinnPhongMesh.h">
       <Filter>Header Files\Mesh Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneBuilder.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

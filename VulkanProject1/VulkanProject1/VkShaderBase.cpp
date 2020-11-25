@@ -226,7 +226,7 @@ VkShaderModule VkShaderBase::createShaderModule(const std::vector<char>& code, V
 void VkShaderBase::createDescriptorSetLayout(VkDevice device)
 {
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 5;
+	uboLayoutBinding.binding = 0;
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.descriptorCount = 1;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;

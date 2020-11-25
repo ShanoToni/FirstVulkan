@@ -37,7 +37,7 @@ void VkBlinPhongShader::initShaderPipeline(float WIDTH, float HEIGHT, VkExtent2D
 	BasicVertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
 	auto bindingDescritption = Vertex::getBindingDescription();
-	auto attributeDescription = Vertex::getAttributeDescriptionsPosColTex();
+	auto attributeDescription = Vertex::getAttributeDescriptionsPosColTexNormal();
 
 	BasicVertexInputInfo.vertexBindingDescriptionCount = 1;
 	BasicVertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
@@ -197,7 +197,7 @@ void VkBlinPhongShader::createDescriptorSetLayout(VkDevice device)
 	// Direction Light
 	VkDescriptorSetLayoutBinding directionLayoutBinding{};
 	directionLayoutBinding.binding = 2;
-	directionLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	directionLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	directionLayoutBinding.descriptorCount = 1;
 	directionLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	directionLayoutBinding.pImmutableSamplers = nullptr;
@@ -205,7 +205,7 @@ void VkBlinPhongShader::createDescriptorSetLayout(VkDevice device)
 	// Point Light
 	VkDescriptorSetLayoutBinding pointLayoutBinding{};
 	pointLayoutBinding.binding = 3;
-	pointLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	pointLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	pointLayoutBinding.descriptorCount = PointLight::POINT_LIGHT_COUNT;
 	pointLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pointLayoutBinding.pImmutableSamplers = nullptr;
@@ -213,20 +213,28 @@ void VkBlinPhongShader::createDescriptorSetLayout(VkDevice device)
 	// Spot Light
 	VkDescriptorSetLayoutBinding spotLayoutBinding{};
 	spotLayoutBinding.binding = 4;
-	spotLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	spotLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	spotLayoutBinding.descriptorCount = SpotLight::SPOT_LIGHT_COUNT;
 	spotLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	spotLayoutBinding.pImmutableSamplers = nullptr;
 
 	// Material
 	VkDescriptorSetLayoutBinding materialLayoutBinding{};
-	spotLayoutBinding.binding = 5;
-	spotLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	spotLayoutBinding.descriptorCount = 1;
-	spotLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	spotLayoutBinding.pImmutableSamplers = nullptr;
+	materialLayoutBinding.binding = 5;
+	materialLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	materialLayoutBinding.descriptorCount = 1;
+	materialLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	materialLayoutBinding.pImmutableSamplers = nullptr;
 
-	std::array<VkDescriptorSetLayoutBinding, 6> bindings = { uboLayoutBinding, samplerLayoutBinding, directionLayoutBinding, pointLayoutBinding, spotLayoutBinding, materialLayoutBinding };
+	// Material
+	VkDescriptorSetLayoutBinding camPosLayoutBinding{};
+	camPosLayoutBinding.binding = 6;
+	camPosLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	camPosLayoutBinding.descriptorCount = 1;
+	camPosLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	camPosLayoutBinding.pImmutableSamplers = nullptr;
+
+	std::array<VkDescriptorSetLayoutBinding, 7> bindings = { uboLayoutBinding, samplerLayoutBinding, directionLayoutBinding, pointLayoutBinding, spotLayoutBinding, materialLayoutBinding, camPosLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -239,7 +247,7 @@ void VkBlinPhongShader::createDescriptorSetLayout(VkDevice device)
 
 void VkBlinPhongShader::createDescritorPool(VkDevice device, int swapChainSize)
 {
-	std::array<VkDescriptorPoolSize, 6> poolSizes{};
+	std::array<VkDescriptorPoolSize, 7> poolSizes{};
 	//ubo
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
@@ -258,6 +266,9 @@ void VkBlinPhongShader::createDescritorPool(VkDevice device, int swapChainSize)
 	//material
 	poolSizes[5].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[5].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
+	//CamPos
+	poolSizes[6].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[6].descriptorCount = static_cast<uint32_t>(swapChainSize) * meshes.size();
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

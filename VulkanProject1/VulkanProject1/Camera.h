@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
-//#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <glm/glm.hpp>
@@ -16,7 +15,7 @@ class Camera
 {
 public:
 	Camera(GLFWwindow* window,
-			glm::vec3 camPos = glm::vec3(0.0f, 5.0f, 10.0f),
+			glm::vec3 camPos = glm::vec3(0.0f, 5.0f, 5.0f),
 			glm::vec3 camTarget = glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f));
 

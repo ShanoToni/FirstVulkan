@@ -3,14 +3,14 @@
 
 MeshTexture::MeshTexture(std::vector<Vertex> verts) : MeshBase(verts)
 {
-	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0, 0));
+	scale(glm::vec3(1, 1, 1));
+	//rotate(glm::vec3(-1, 0, 0));
 }
 
 MeshTexture::MeshTexture(std::string modelPath) : MeshBase(modelPath)
 {
-	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0, 0));
+	scale(glm::vec3(1, 1, 1));
+	//rotate(glm::vec3(-1, 0, 0));
 }
 
 void MeshTexture::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)

@@ -164,6 +164,7 @@
     <ClCompile Include="MeshTexture.cpp" />
     <ClCompile Include="OffscreenBuffer.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="SceneBuilder.cpp" />
     <ClCompile Include="ScreenQuadMesh.cpp" />
     <ClCompile Include="ScreenQuadShader.cpp" />
     <ClCompile Include="SkyBox.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="MeshTexture.h" />
     <ClInclude Include="OffscreenBuffer.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="SceneBuilder.h" />
     <ClInclude Include="ScreenQuadMesh.h" />
     <ClInclude Include="ScreenQuadShader.h" />
     <ClInclude Include="SkyBox.h" />

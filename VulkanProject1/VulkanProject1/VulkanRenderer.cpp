@@ -19,76 +19,7 @@ const std::vector<const char*> deviceExtensions = {
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-const std::string VShaderPath = "Shaders/TextureShaderVert.spv";
-const std::string FShaderPath = "Shaders/TextureShaderFrag.spv";
-
-const std::string OBJPATH = "OBJs/viking_room.obj";
-const std::string OBJTEXPATH = "Textures/viking_room.png";
-
 const int MAX_FRAMES_IN_FLIGHT = 2;
-
-
-//--------------------------------------------- TESTING VALUES ----------------------------------------------------------------------------------
-const std::vector<Vertex> vertices = {
-	{{-40.5f, 0.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{40.5f, 0.f, 40.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{40.5f, 0.f, -40.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-40.5f, 0.f, -40.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
-
-const std::vector<Vertex> vertices2 = {
-	{{-40.5f, 5.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{40.5f, 5.f, 40.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{40.5f, 5.f, -40.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-40.5f, 5.f, -40.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
-
-const std::vector<uint16_t> indices = {	0, 1, 2, 2, 3, 0 };
-
-
-const std::string ScreenVShaderPath = "Shaders/ScreenShaderVert.spv";
-const std::string ScreenFShaderPath = "Shaders/ScreenShaderFrag.spv";
-
-const std::vector<Vertex> screenQuadVertices = {
-	{{-1, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{-1.0f, 1.f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-	{{1.0f, 1.f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}
-};
-
-const std::vector<uint16_t> screenIndices = { 0, 1, 2, 1, 3, 2 };
-
-std::string textureFile = "Textures/texture.jpg";
-
-
-const std::string SkyboxVShaderPath = "Shaders/SkyboxShaderVert.spv";
-const std::string SkyboxFShaderPath = "Shaders/SkyboxShaderFrag.spv";
-
-const std::vector<Vertex> skyboxVerts = {
-	{{-1.0f, 1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{-1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-	{{1.0f,  1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-1.0f, -1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-1.0f,  1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{1.0f, -1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{ 1.0f,  1.0f,  1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-};
-
-
-const std::vector<uint16_t> skyboxIndices = {0,1,2,		2,3,0,
-											 4,1,0,		0,5,4,
-											 2,6,7,		7,3,2,
-											 4,5,7,		7,6,4,
-											 0,3,7,		7,5,0,
-											 1,4,2,		2,4,6};
-
-std::string skyboxFront = "Textures/sh_ft.png";
-std::string skyboxBack = "Textures/sh_bk.png";
-std::string skyboxUp = "Textures/sh_up.png";
-std::string skyboxDown = "Textures/sh_dn.png";
-std::string skyboxRight = "Textures/sh_rt.png";
-std::string skyboxLeft = "Textures/sh_lf.png";
 
 //--------------------------------------------ADDITIONAL PROXY FUNCTION FOR VALIDATION LAYERS-------------------------------------------------
 
@@ -231,48 +162,17 @@ void VulkanRenderer::initVulkan()
 
 void VulkanRenderer::setupScene()
 {
+	std::shared_ptr<SceneBuilder> temp(new SceneBuilder);
 
-	// TEXTURED OBJECTS
-	std::vector<std::shared_ptr<MeshTexture>> meshes;
-	Texture tex = Texture(OBJTEXPATH);
-	std::shared_ptr<MeshTexture> m(new MeshTexture(OBJPATH));
-	m->setTexture(std::make_shared<Texture>(tex));
-	meshes.push_back(m);
+	builder = temp;
+	
+	builder->setupScene();
 
+	shader = builder->getTexShader();
+	shaderScreenQuad = builder->getScreenQuadShader();
+	skyboxShader = builder->getSkyboxShader();
+	shaderBlinnPhong = builder->getBlinnPhongShader();
 
-	std::shared_ptr <VkShaderTexture> shaderTemp(new VkShaderTexture(VShaderPath, FShaderPath, meshes));
-	shader = shaderTemp;
-
-	// SCREEN QUAD
-	std::vector<std::shared_ptr<ScreenQuadMesh>> screenQuad;
-	std::shared_ptr<ScreenQuadMesh> quad(new ScreenQuadMesh(screenQuadVertices));
-	quad->setIndices(screenIndices);
-	screenQuad.push_back(quad);
-
-	std::shared_ptr<ScreenQuadShader> screenShaderTemp(new ScreenQuadShader(ScreenVShaderPath, ScreenFShaderPath, screenQuad));
-	shaderScreenQuad = screenShaderTemp;
-
-	//SKYBOX
-	std::vector<std::string> paths;
-	paths.push_back(skyboxFront);
-	paths.push_back(skyboxBack);
-	paths.push_back(skyboxUp);
-	paths.push_back(skyboxDown);
-	paths.push_back(skyboxRight);
-	paths.push_back(skyboxLeft);
-
-	SkyBox skytex = SkyBox(paths);
-
-	std::vector<std::shared_ptr<MeshSkybox>> skymeshes;
-	std::shared_ptr<MeshSkybox> skymesh(new MeshSkybox(skyboxVerts));
-	skymesh->setIndices(skyboxIndices);
-
-	skymesh->setSkybox(std::make_shared<SkyBox>(skytex));
-	skymesh->scale(glm::vec3(500.f));
-	skymeshes.push_back(skymesh);
-
-	std::shared_ptr<VkShaderSkybox> skyboxShadertemp(new VkShaderSkybox(SkyboxVShaderPath, SkyboxFShaderPath, skymeshes));
-	skyboxShader = skyboxShadertemp;
 }
 
 void VulkanRenderer::mainLoop()
@@ -688,10 +588,6 @@ void VulkanRenderer::cleanupSwapChain()
 	vkDestroyFramebuffer(device, offScreen.getOffscreenFramebuffer(), nullptr);
 	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	
-	
-	vkDestroyPipeline(device, shader->getPipeline(), nullptr);
-	vkDestroyPipelineLayout(device, shader->getPipelineLayout(), nullptr);
-	
 	vkDestroyRenderPass(device, offScreen.getOffscreenRenderPass(), nullptr);
 	vkDestroyRenderPass(device, renderPass, nullptr);
 
@@ -699,18 +595,7 @@ void VulkanRenderer::cleanupSwapChain()
 	{
 		vkDestroyImageView(device, swapChainImageViews[i], nullptr);
 	}
-
-	for (size_t i = 0; i < swapChainImages.size(); i++)
-	{
-		for (auto& mesh : shader->getMeshes())
-		{
-			vkDestroyBuffer(device, mesh->getUniformBuffers()[i], nullptr);
-			vkFreeMemory(device, mesh->getUniformBufferMemory()[i], nullptr);
-		}
-	}
-	
-	vkDestroyDescriptorPool(device, shader->getDescriptorPool(), nullptr);
-
+	builder->cleanUpShaders(device, swapChainImages);
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
@@ -790,16 +675,10 @@ void VulkanRenderer::createRenderPass()
 	}
 }
 
-//------------------------------------------------------ !!! ADD NEW SHADER HERE !!! -------------------------------------------------------------------------------------------------------------------------
 
 void VulkanRenderer::createGraphicsPipelines()
 {
-	
-	shader->initShaderPipeline(WIDTH,HEIGHT, swapChainExtent, renderPass, device);
-
-	shaderScreenQuad->initShaderPipeline(WIDTH, HEIGHT, swapChainExtent, renderPass, device);
-
-	skyboxShader->initShaderPipeline(WIDTH, HEIGHT, swapChainExtent, renderPass, device);
+	builder->initShaderPipelines(WIDTH, HEIGHT, swapChainExtent, renderPass, device);
 }
 
 
@@ -928,6 +807,23 @@ void VulkanRenderer::createCommandBuffers()
 
 			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
 		}
+
+		//--------------------------------------------------BLINNPHONG SHADER ---------------------------------------------------
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderBlinnPhong->getPipeline());
+		for (auto& mesh : shaderBlinnPhong->getMeshes())
+		{
+			VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };
+			VkDeviceSize offsets[] = { 0 };
+
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+			vkCmdBindIndexBuffer(commandBuffers[i], mesh->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderBlinnPhong->getPipelineLayout(), 0, 1, &mesh->getDescriptorSets(), 0, nullptr);
+
+			vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(mesh->getVertices().size()), 1, 0, 0);
+			//vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
+		}
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 
@@ -974,8 +870,6 @@ void VulkanRenderer::createCommandBuffers()
 
 }
 
-
-
 void VulkanRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
 	VkCommandBufferAllocateInfo allocInfo{};
@@ -1012,152 +906,70 @@ void VulkanRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDevice
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-// --------------------------------------------------------- UNIFORM BUFFER  !!! ADD NEW SHADER HERE !!! ------------------------------------------------------------------------------------------
+// --------------------------------------------------------- UNIFORM BUFFER  ------------------------------------------------------------------------------------------
 
 void VulkanRenderer::createDescriptorSetLayout()
 {
-	shader->createDescriptorSetLayout(device);
-	
-	shaderScreenQuad->createDescriptorSetLayout(device);
-
-	skyboxShader->createDescriptorSetLayout(device);
+	builder->createDescriptorSetLayouts(device);
 }
 
-//Create uniform buffer for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  !!! ADD NEW SHADER HERE !!!  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//Create uniform buffer for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void VulkanRenderer::createUniformBuffers()
 {
-	for (auto & mesh : shader->getMeshes())
-	{
-		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
-	}
-
-	for (auto& mesh : shaderScreenQuad->getMeshes())
-	{
-		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
-	}
-	
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->createUniformBuffers(swapChainImages, device, physicalDevice);
-	}
+	builder->createUniformBuffers(swapChainImages, device, physicalDevice);
 }
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
-	}
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->updateUniformBuffer(currentImage, *camera, swapChainExtent, device);
-	}
-
+	builder->updateUniformBuffers(currentImage, *camera, swapChainExtent, device);
+	builder->setLightingUBOBuffers(currentImage, device);
 }
 
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHE TO DESCRIPTOR POOL SIZE  !!! ADD NEW SHADER HERE !!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD SHADER MESHE TO DESCRIPTOR POOL SIZE  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void VulkanRenderer::createDescritorPool()
 {
-	shader->createDescritorPool(device, swapChainImages.size());
-	
-	shaderScreenQuad->createDescritorPool(device, swapChainImages.size());
-
-	skyboxShader->createDescritorPool(device, swapChainImages.size());
+	builder->createDescriptorPool(device, swapChainImages.size());
 }
 
 //Create descriptor set for new shaders here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! !!! ADD NEW SHADER HERE !!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 void VulkanRenderer::createDescriptorSet()
 {
-	shader->createDescriptorSets(swapChainImages, device);
-
-	shaderScreenQuad->createDescriptorSets(swapChainImages, device);
-
-	skyboxShader->createDescriptorSets(swapChainImages, device);
+	builder->createDescriptorSets(swapChainImages, device);
 }
 
 // --------------------------------------------------------- BasicVertex BUFFER -----------------------  !!! ADD NEW SHADER HERE !!!-------------------------------------------------------------------
 
 void VulkanRenderer::createVertexBuffer()
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
-	}
-
-	for (auto& mesh : shaderScreenQuad->getMeshes())
-	{
-		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
-	}
-
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->createVertexBuffer(device, physicalDevice, commandPool, graphicsQueue);
-	}
+	builder->createVertexBuffers(device, physicalDevice, commandPool, graphicsQueue);
 }
 
 //!!!ADD NEW SHADER HERE !!!
 
 void VulkanRenderer::createIndexBuffer()
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
-	}
-
-	for (auto& mesh : shaderScreenQuad->getMeshes())
-	{
-		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
-	}
-
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->createIndexBuffer(device, physicalDevice, commandPool, graphicsQueue);
-	}
+	builder->createIndexBuffers(device, physicalDevice, commandPool, graphicsQueue);
 }
 
-// --------------------------------------------------------- TEXTURE ------------------------- !!! ADD NEW SHADER HERE IF TEXTURED!!!-----------------------------------------------------------------
+// --------------------------------------------------------- TEXTURE ------------------------------------------------------------------------------------------
 
 void VulkanRenderer::createTextureImage()
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->getTexture()->createTexture(device, physicalDevice, commandPool, graphicsQueue);
-	}
-
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->getSkybox()->createSkybox(device, physicalDevice, commandPool, graphicsQueue);
-	}
+	builder->createTextures(device, physicalDevice, commandPool, graphicsQueue);
 }
 
-//!!!ADD NEW SHADER HERE IF TEXTURED!!!
+
 
 void VulkanRenderer::createTextureImageView()
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->getTexture()->getTextureImageView() = VulkanHelperFunctions::createImageView(mesh->getTexture()->getTextureImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
-	}
-
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->getSkybox()->getSkyboxImageView() = VulkanHelperFunctions::createSkyboxView(mesh->getSkybox()->getSkyboxImage(), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, device);
-	}
+	builder->createTextureImageView(device);
 }
 
 void VulkanRenderer::createTextureSampler()
 {
-	for (auto& mesh : shader->getMeshes())
-	{
-		mesh->getTexture()->createTextureSampler(device);
-	}
-
-	for (auto& mesh : skyboxShader->getMeshes())
-	{
-		mesh->getSkybox()->createSkyboxSampler(device);
-	}
+	builder->createTextureImageSampler(device);
 }
 
 // --------------------------------------------------------- DEPTH RESOURCES ------------------------------------------------------------------------------------------
@@ -1435,15 +1247,7 @@ void VulkanRenderer::cleanup()
 {
 	cleanupSwapChain();
 
-	vkDestroyDescriptorSetLayout(device, shader->getDescriptorSetLayout(), nullptr);
-	for (auto& mesh : shader->getMeshes())
-	{
-		vkDestroyBuffer(device, mesh->getIndexBuffer(), nullptr);
-		vkFreeMemory(device, mesh->getIndexBufferMemory(), nullptr);
-
-		vkDestroyBuffer(device, mesh->getVertexBuffer(), nullptr);
-		vkFreeMemory(device, mesh->getVertexBufferMemory(), nullptr);
-	}
+	builder->cleanUpMeshes(device);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{

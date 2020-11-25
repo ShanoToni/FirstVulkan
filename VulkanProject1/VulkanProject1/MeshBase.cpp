@@ -46,9 +46,9 @@ MeshBase::MeshBase(std::string filePath)
 				1.0f - attribute.texcoords[2 * index.texcoord_index + 1]
 			};
 			vertex.normal = {
-				attribute.vertices[3 * index.normal_index + 0],
-				attribute.vertices[3 * index.normal_index + 1],
-				attribute.vertices[3 * index.normal_index + 2]
+				attribute.normals[3 * index.normal_index + 0],
+				attribute.normals[3 * index.normal_index + 1],
+				attribute.normals[3 * index.normal_index + 2]
 			};
 			vertex.color = glm::vec3(1.0f);
 

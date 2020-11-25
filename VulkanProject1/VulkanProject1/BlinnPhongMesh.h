@@ -8,34 +8,40 @@
 
 struct DirectionalLightStruct
 {
-	glm::vec3 color;
-	float ambientIntensity;
-	float diffuseIntensity;
-	glm::vec3 direction;
+	alignas(16) glm::vec3 color;
+	alignas(4) float ambientIntensity;
+	alignas(4) float diffuseIntensity;
+	alignas(16) glm::vec3 direction;
 };
 
 struct PointLightStruct
 {
-	glm::vec3 color;
-	float ambientIntensity;
-	float diffuseIntensity;
-	glm::vec3 position;
-	float constant;
-	float linear;
-	float exponent;
+	alignas(16) glm::vec3 color;
+	alignas(4) float ambientIntensity;
+	alignas(4) float diffuseIntensity;
+	alignas(16) glm::vec3 position;
+	alignas(4) float constant;
+	alignas(4) float linear;
+	alignas(4) float exponent;
 };
 
 struct SpotLightStruct
 {
-	PointLightStruct base;
-	glm::vec3 direction;
-	float edge;
+	alignas(16) glm::vec3 color;
+	alignas(4) float ambientIntensity;
+	alignas(4) float diffuseIntensity;
+	alignas(16) glm::vec3 position;
+	alignas(4) float constant;
+	alignas(4) float linear;
+	alignas(4) float exponent;
+	alignas(16) glm::vec3 direction;
+	alignas(4) float edge;
 };
 
 struct MaterialStruct
 {
-	float specularIntensity;
-	float shininess;
+	alignas(4) float specularIntensity;
+	alignas(4) float shininess;
 };
 
 class BlinnPhongMesh :
@@ -50,7 +56,9 @@ public:
 
 	// ADDITIONS
 	void createLightingUBOBuffers(std::vector<VkImage> swapChainImages, VkDevice device, VkPhysicalDevice physicalDevice);
-	void setLightingUBOBuffers(uint32_t currentImage, VkDevice device, DirectionalLight dirLight, std::vector<PointLight> pointLights, std::vector<SpotLight> spotLights, Material mat);
+	void setLightingUBOBuffers(uint32_t currentImage, VkDevice device, std::shared_ptr<DirectionalLight> dirLight, std::vector< std::shared_ptr<PointLight>> pointLights, std::vector< std::shared_ptr<SpotLight>> spotLights, std::shared_ptr < Material> mat);
+	void updateCampPosBuffer(uint32_t currentImage, Camera& cam, VkDevice device);
+
 
 	void setTexture(std::shared_ptr<Texture> tex) { texture = tex; }
 	inline std::shared_ptr<Texture> getTexture() { return texture; }
@@ -74,5 +82,8 @@ protected:
 	MaterialStruct materialData;
 	std::vector<VkBuffer> materialBuffer;
 	std::vector<VkDeviceMemory> materialBufferMemory;
+
+	std::vector<VkBuffer> camPosBuffer;
+	std::vector<VkDeviceMemory> camPosBufferMemory;
 };
 

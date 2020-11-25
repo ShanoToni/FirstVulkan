@@ -2,14 +2,18 @@
 
 BlinnPhongMesh::BlinnPhongMesh(std::vector<Vertex> verts) : MeshBase(verts)
 {
-	scale(glm::vec3(100, 100, 100));
-	rotate(glm::vec3(-1, 0, 0));
+	scale(glm::vec3(1, 1, 1));
+	//rotate(glm::vec3(-1, 0, 0));
 }
 
 BlinnPhongMesh::BlinnPhongMesh(std::string modelPath) : MeshBase(modelPath)
 {
 	scale(glm::vec3(1, 1, 1));
-	rotate(glm::vec3(-1, 0, 0));
+	//rotate(glm::vec3(-1, 0, 0));
+	directionalLightData.ambientIntensity = 0.f;
+	directionalLightData.diffuseIntensity = 0.f;
+	directionalLightData.color = glm::vec3(0.0f);
+	directionalLightData.direction = glm::vec3(0.0f);
 }
 
 void BlinnPhongMesh::createDescriptorSets(std::vector<VkImage> swapChainImages, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkDevice device)
@@ -50,22 +54,28 @@ void BlinnPhongMesh::createDescriptorSets(std::vector<VkImage> swapChainImages, 
 		VkDescriptorBufferInfo pointBufferInfo{};
 		pointBufferInfo.buffer = pointLightBuffers[i];
 		pointBufferInfo.offset = 0;
-		pointBufferInfo.range = sizeof(PointLightStruct);
+		pointBufferInfo.range = sizeof(PointLightStruct) * PointLight::POINT_LIGHT_COUNT;
 		
 		// Spot Light
 		VkDescriptorBufferInfo spotBufferInfo{};
 		spotBufferInfo.buffer = spotLightBuffers[i];
 		spotBufferInfo.offset = 0;
-		spotBufferInfo.range = sizeof(SpotLightStruct);
+		spotBufferInfo.range = sizeof(SpotLightStruct) * SpotLight::SPOT_LIGHT_COUNT;
 
 		// Material	
 		VkDescriptorBufferInfo materialBufferInfo{};
 		materialBufferInfo.buffer = materialBuffer[i];
 		materialBufferInfo.offset = 0;
 		materialBufferInfo.range = sizeof(MaterialStruct);
+
+		// CamPos	
+		VkDescriptorBufferInfo camPosBufferInfo{};
+		camPosBufferInfo.buffer = camPosBuffer[i];
+		camPosBufferInfo.offset = 0;
+		camPosBufferInfo.range = sizeof(glm::vec3);
 		
 
-		std::array<VkWriteDescriptorSet, 6> descriptorWrites{};
+		std::array<VkWriteDescriptorSet, 7> descriptorWrites{};
 
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = descriptorSet;
@@ -127,17 +137,27 @@ void BlinnPhongMesh::createDescriptorSets(std::vector<VkImage> swapChainImages, 
 		descriptorWrites[5].pImageInfo = nullptr;
 		descriptorWrites[5].pTexelBufferView = nullptr;
 
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		descriptorWrites[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[6].dstSet = descriptorSet;
+		descriptorWrites[6].dstBinding = 6;
+		descriptorWrites[6].dstArrayElement = 0;
+		descriptorWrites[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[6].descriptorCount = 1;
+		descriptorWrites[6].pBufferInfo = &camPosBufferInfo;
+		descriptorWrites[6].pImageInfo = nullptr;
+		descriptorWrites[6].pTexelBufferView = nullptr;
+
+ 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
 void BlinnPhongMesh::createLightingUBOBuffers(std::vector<VkImage> swapChainImages, VkDevice device, VkPhysicalDevice physicalDevice)
 {
 	// Create direction buffer
-	VkDeviceSize directionalBufferSize = sizeof(DirectionalLightStruct);
+	VkDeviceSize directionalBufferSize = sizeof(directionalLightData);
 
 	directionalLightBuffers.resize(swapChainImages.size());
-	directionalLightBuffers.resize(swapChainImages.size());
+	directionalLightBuffersMemory.resize(swapChainImages.size());
 
 	for (size_t i = 0; i < swapChainImages.size(); i++)
 	{
@@ -151,7 +171,7 @@ void BlinnPhongMesh::createLightingUBOBuffers(std::vector<VkImage> swapChainImag
 	VkDeviceSize pointBufferSize = sizeof(PointLightStruct);
 
 	pointLightBuffers.resize(swapChainImages.size());
-	pointLightBuffers.resize(swapChainImages.size());
+	pointLightBuffersMemory.resize(swapChainImages.size());
 
 	for (size_t i = 0; i < swapChainImages.size(); i++)
 	{
@@ -165,7 +185,7 @@ void BlinnPhongMesh::createLightingUBOBuffers(std::vector<VkImage> swapChainImag
 	VkDeviceSize spotBufferSize = sizeof(SpotLightStruct);
 
 	spotLightBuffers.resize(swapChainImages.size());
-	spotLightBuffers.resize(swapChainImages.size());
+	spotLightBuffersMemory.resize(swapChainImages.size());
 
 	for (size_t i = 0; i < swapChainImages.size(); i++)
 	{
@@ -174,14 +194,43 @@ void BlinnPhongMesh::createLightingUBOBuffers(std::vector<VkImage> swapChainImag
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			spotLightBuffers[i], spotLightBuffersMemory[i], device, physicalDevice);
 	}
+
+	// Create material buffer
+	VkDeviceSize materialBufferSize = sizeof(MaterialStruct);
+
+	materialBuffer.resize(swapChainImages.size());
+	materialBufferMemory.resize(swapChainImages.size());
+
+	for (size_t i = 0; i < swapChainImages.size(); i++)
+	{
+		VulkanHelperFunctions::createBuffer(materialBufferSize,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			materialBuffer[i], materialBufferMemory[i], device, physicalDevice);
+	}
+
+	// Create material buffer
+	VkDeviceSize camPosBufferSize = sizeof(glm::vec3);
+
+	camPosBuffer.resize(swapChainImages.size());
+	camPosBufferMemory.resize(swapChainImages.size());
+
+	for (size_t i = 0; i < swapChainImages.size(); i++)
+	{
+		VulkanHelperFunctions::createBuffer(camPosBufferSize,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			camPosBuffer[i], camPosBufferMemory[i], device, physicalDevice);
+	}
 }
 
-void BlinnPhongMesh::setLightingUBOBuffers(uint32_t currentImage, VkDevice device, DirectionalLight dirLight, std::vector<PointLight> pointLights, std::vector<SpotLight> spotLights, Material mat)
+void BlinnPhongMesh::setLightingUBOBuffers(uint32_t currentImage, VkDevice device, std::shared_ptr<DirectionalLight> dirLight, std::vector< std::shared_ptr<PointLight>> pointLights, std::vector< std::shared_ptr<SpotLight>> spotLights, std::shared_ptr < Material> mat)
 {
-	directionalLightData.color = dirLight.getColor();
-	directionalLightData.ambientIntensity = dirLight.getAmbientIntensity();
-	directionalLightData.diffuseIntensity = dirLight.getDiffuseIntensity();
-	directionalLightData.direction = dirLight.getDirection();
+	directionalLightData.color = dirLight->getColor();
+	directionalLightData.direction = dirLight->getDirection();
+	directionalLightData.ambientIntensity = dirLight->getAmbientIntensity();
+	directionalLightData.diffuseIntensity = dirLight->getDiffuseIntensity();
+
 
 	if (PointLight::POINT_LIGHT_COUNT != pointLights.size())
 	{
@@ -190,15 +239,15 @@ void BlinnPhongMesh::setLightingUBOBuffers(uint32_t currentImage, VkDevice devic
 
 	for (int i = 0; i < PointLight::POINT_LIGHT_COUNT; i++)
 	{
-		pointLightData[i].color = pointLights[i].getColor();
-		pointLightData[i].position = pointLights[i].getPosition();
+		pointLightData[i].color = pointLights[i]->getColor();
+		pointLightData[i].position = pointLights[i]->getPosition();
 
-		pointLightData[i].ambientIntensity = pointLights[i].getAmbientIntensity();
-		pointLightData[i].diffuseIntensity = pointLights[i].getDiffuseIntensity();
+		pointLightData[i].ambientIntensity = pointLights[i]->getAmbientIntensity();
+		pointLightData[i].diffuseIntensity = pointLights[i]->getDiffuseIntensity();
 
-		pointLightData[i].constant = pointLights[i].getConstant();
-		pointLightData[i].linear = pointLights[i].getLinear();
-		pointLightData[i].exponent = pointLights[i].getExponent();
+		pointLightData[i].constant = pointLights[i]->getConstant();
+		pointLightData[i].linear = pointLights[i]->getLinear();
+		pointLightData[i].exponent = pointLights[i]->getExponent();
 	}
 
 	if (SpotLight::SPOT_LIGHT_COUNT != spotLights.size())
@@ -208,27 +257,28 @@ void BlinnPhongMesh::setLightingUBOBuffers(uint32_t currentImage, VkDevice devic
 
 	for (int i = 0; i < SpotLight::SPOT_LIGHT_COUNT; i++)
 	{
-		spotLightData[i].base.color = spotLights[i].getColor();
-		spotLightData[i].base.position = spotLights[i].getPosition();
+		spotLightData[i].color = spotLights[i]->getColor();
+		spotLightData[i].position = spotLights[i]->getPosition();
 
-		spotLightData[i].base.ambientIntensity = spotLights[i].getAmbientIntensity();
-		spotLightData[i].base.diffuseIntensity = spotLights[i].getDiffuseIntensity();
+		spotLightData[i].ambientIntensity = spotLights[i]->getAmbientIntensity();
+		spotLightData[i].diffuseIntensity = spotLights[i]->getDiffuseIntensity();
 
-		spotLightData[i].base.constant = spotLights[i].getConstant();
-		spotLightData[i].base.linear = spotLights[i].getLinear();
-		spotLightData[i].base.exponent = spotLights[i].getExponent();
+		spotLightData[i].constant = spotLights[i]->getConstant();
+		spotLightData[i].linear = spotLights[i]->getLinear();
+		spotLightData[i].exponent = spotLights[i]->getExponent();
 
-		spotLightData[i].direction = spotLights[i].getDirection();
-		spotLightData[i].edge = spotLights[i].getEdge();
+		spotLightData[i].direction = spotLights[i]->getDirection();
+		spotLightData[i].edge = spotLights[i]->getEdge();
 	}
 
-	materialData.shininess = mat.getShininess();
-	materialData.specularIntensity = mat.getSpecularIntensity();
+	materialData.shininess = mat->getShininess();
+	materialData.specularIntensity = mat->getSpecularIntensity();
 
+	VkDeviceSize directionalBufferSize = sizeof(directionalLightData);
 	//send directional light data
 	void* directionalData;
-	vkMapMemory(device, directionalLightBuffersMemory[currentImage], 0, sizeof(directionalLightData), 0, &directionalData);
-		memcpy(directionalData, &directionalLightData, sizeof(directionalLightData));
+	vkMapMemory(device, directionalLightBuffersMemory[currentImage], 0, directionalBufferSize, 0, &directionalData);
+		memcpy(directionalData, &directionalLightData, directionalBufferSize);
 	vkUnmapMemory(device, directionalLightBuffersMemory[currentImage]);
 
 	//send point light data
@@ -256,8 +306,16 @@ void BlinnPhongMesh::setLightingUBOBuffers(uint32_t currentImage, VkDevice devic
 	vkUnmapMemory(device, spotLightBuffersMemory[currentImage]);
 
 	//send directional light data
-	void* matlData;
-	vkMapMemory(device, materialBufferMemory[currentImage], 0, sizeof(materialData), 0, &matlData);
-		memcpy(matlData, &materialData, sizeof(materialData));
+	void* matData;
+	vkMapMemory(device, materialBufferMemory[currentImage], 0, sizeof(materialData), 0, &matData);
+		memcpy(matData, &materialData, sizeof(materialData));
 	vkUnmapMemory(device, materialBufferMemory[currentImage]);
+}
+
+void BlinnPhongMesh::updateCampPosBuffer(uint32_t currentImage, Camera& cam, VkDevice device)
+{
+	void* data;
+	vkMapMemory(device, camPosBufferMemory[currentImage], 0, sizeof(glm::vec3), 0, &data);
+	memcpy(data, &cam.getCamPos(), sizeof(glm::vec3));
+	vkUnmapMemory(device, camPosBufferMemory[currentImage]);
 }

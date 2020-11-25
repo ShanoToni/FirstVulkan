@@ -19,6 +19,8 @@
 #include "OffscreenBuffer.h"
 #include "VkShaderSkybox.h"
 
+#include "SceneBuilder.h"
+
 struct QueueFamilyIndices
 {
 	std::optional<uint32_t> graphicsFamily;
@@ -216,9 +218,12 @@ private:
 
 	VkDescriptorSetLayout descriptorSetLayout;
 
+	std::shared_ptr<SceneBuilder> builder;
+
 	std::shared_ptr<VkShaderTexture> shader;
 	std::shared_ptr<VkShaderSkybox> skyboxShader;
 	std::shared_ptr<ScreenQuadShader> shaderScreenQuad;
+	std::shared_ptr<VkBlinPhongShader> shaderBlinnPhong;
 
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
