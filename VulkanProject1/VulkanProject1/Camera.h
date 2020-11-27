@@ -5,7 +5,7 @@
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -57,6 +57,7 @@ public:
 	glm::vec3& getCamFront() { return cameraFront; }
 	glm::vec3& getCamPos() { return cameraPos; }
 	glm::vec3& getCamUp() { return cameraUp; }
+	glm::vec3 getCamDirection() { return glm::normalize(direction); }
 
 	bool& getFirstMouse() { return firstMouse; }
 };

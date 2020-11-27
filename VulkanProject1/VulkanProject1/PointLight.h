@@ -1,4 +1,5 @@
 #pragma once
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
 class PointLight
 {
@@ -6,7 +7,7 @@ public:
 	PointLight();
 	PointLight(glm::vec3 pos, glm::vec3 col ,float cons, float lin, float ex, float aIntensity, float dIntensity);
 
-	static const int POINT_LIGHT_COUNT = 1;
+	static const int POINT_LIGHT_COUNT = 3;
 
 	inline glm::vec3 getPosition() { return position; }
 	inline float getConstant() { return constant; }

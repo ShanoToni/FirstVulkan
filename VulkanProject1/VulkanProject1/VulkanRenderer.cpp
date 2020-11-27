@@ -793,7 +793,7 @@ void VulkanRenderer::createCommandBuffers()
 
 
 		//--------------------------------------------------Texture SHADER ---------------------------------------------------
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
+		/*vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipeline());
 		for (auto& mesh : shader->getMeshes())
 		{
 			VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };
@@ -806,7 +806,7 @@ void VulkanRenderer::createCommandBuffers()
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getPipelineLayout(), 0, 1, &mesh->getDescriptorSets(), 0, nullptr);
 
 			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
-		}
+		}*/
 
 		//--------------------------------------------------BLINNPHONG SHADER ---------------------------------------------------
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderBlinnPhong->getPipeline());
@@ -821,8 +821,8 @@ void VulkanRenderer::createCommandBuffers()
 
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderBlinnPhong->getPipelineLayout(), 0, 1, &mesh->getDescriptorSets(), 0, nullptr);
 
-			vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(mesh->getVertices().size()), 1, 0, 0);
-			//vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
+			//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(mesh->getVertices().size()), 1, 0, 0);
+			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->getIndices().size()), 1, 0, 0, 0);
 		}
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -922,7 +922,6 @@ void VulkanRenderer::createUniformBuffers()
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 {
 	builder->updateUniformBuffers(currentImage, *camera, swapChainExtent, device);
-	builder->setLightingUBOBuffers(currentImage, device);
 }
 
 

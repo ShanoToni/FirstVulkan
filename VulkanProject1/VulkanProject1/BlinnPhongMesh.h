@@ -8,40 +8,40 @@
 
 struct DirectionalLightStruct
 {
-	alignas(16) glm::vec3 color;
-	alignas(4) float ambientIntensity;
-	alignas(4) float diffuseIntensity;
-	alignas(16) glm::vec3 direction;
+	float ambientIntensity;
+	float diffuseIntensity;
+	glm::vec4 color;
+	glm::vec4 direction;
 };
 
 struct PointLightStruct
 {
-	alignas(16) glm::vec3 color;
-	alignas(4) float ambientIntensity;
-	alignas(4) float diffuseIntensity;
-	alignas(16) glm::vec3 position;
-	alignas(4) float constant;
-	alignas(4) float linear;
-	alignas(4) float exponent;
+	float ambientIntensity;
+	float diffuseIntensity;
+	float constant;
+	float linear;
+	float exponent;
+	glm::vec4 color;
+	glm::vec4 position;
 };
 
 struct SpotLightStruct
 {
-	alignas(16) glm::vec3 color;
-	alignas(4) float ambientIntensity;
-	alignas(4) float diffuseIntensity;
-	alignas(16) glm::vec3 position;
-	alignas(4) float constant;
-	alignas(4) float linear;
-	alignas(4) float exponent;
-	alignas(16) glm::vec3 direction;
-	alignas(4) float edge;
+	float ambientIntensity;
+	float diffuseIntensity;
+	float constant;
+	float linear;
+	float exponent;
+	float edge;
+	glm::vec4 color;
+	glm::vec4 position;
+	glm::vec4 direction;
 };
 
 struct MaterialStruct
 {
-	alignas(4) float specularIntensity;
-	alignas(4) float shininess;
+	float specularIntensity;
+	float shininess;
 };
 
 class BlinnPhongMesh :
@@ -56,7 +56,7 @@ public:
 
 	// ADDITIONS
 	void createLightingUBOBuffers(std::vector<VkImage> swapChainImages, VkDevice device, VkPhysicalDevice physicalDevice);
-	void setLightingUBOBuffers(uint32_t currentImage, VkDevice device, std::shared_ptr<DirectionalLight> dirLight, std::vector< std::shared_ptr<PointLight>> pointLights, std::vector< std::shared_ptr<SpotLight>> spotLights, std::shared_ptr < Material> mat);
+	void setLightingUBOBuffers(uint32_t currentImage, VkDevice device, std::shared_ptr<DirectionalLight> dirLight, std::vector< std::shared_ptr<PointLight>> pointLights, std::vector< std::shared_ptr<SpotLight>> spotLights, std::shared_ptr < Material> mat, Camera& cam);
 	void updateCampPosBuffer(uint32_t currentImage, Camera& cam, VkDevice device);
 
 

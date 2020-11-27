@@ -10,7 +10,17 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	outColor = texture(texSampler, fragTexCoord);
+
+	float gamma = 2.2;
+	vec3 hdrColor = texture(texSampler, fragTexCoord).xyz;
+
+	vec3 mapped = vec3(1.0) - exp(-hdrColor * 0.2);
+
+	mapped = pow(mapped, vec3(1.0f/gamma));
+
+	outColor = vec4(mapped, 1.0f);
+
+
 	float offset = 1.0 / 300.0;
 
 		vec2 offsets[9] = vec2[](

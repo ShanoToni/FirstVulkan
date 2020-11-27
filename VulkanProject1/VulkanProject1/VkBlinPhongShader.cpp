@@ -206,7 +206,7 @@ void VkBlinPhongShader::createDescriptorSetLayout(VkDevice device)
 	VkDescriptorSetLayoutBinding pointLayoutBinding{};
 	pointLayoutBinding.binding = 3;
 	pointLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	pointLayoutBinding.descriptorCount = PointLight::POINT_LIGHT_COUNT;
+	pointLayoutBinding.descriptorCount = 1;
 	pointLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pointLayoutBinding.pImmutableSamplers = nullptr;
 
@@ -214,7 +214,7 @@ void VkBlinPhongShader::createDescriptorSetLayout(VkDevice device)
 	VkDescriptorSetLayoutBinding spotLayoutBinding{};
 	spotLayoutBinding.binding = 4;
 	spotLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	spotLayoutBinding.descriptorCount = SpotLight::SPOT_LIGHT_COUNT;
+	spotLayoutBinding.descriptorCount = 1;
 	spotLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	spotLayoutBinding.pImmutableSamplers = nullptr;
 

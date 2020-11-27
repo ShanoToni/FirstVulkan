@@ -6,6 +6,10 @@ const std::string FShaderPath = "Shaders/TextureShaderFrag.spv";
 const std::string OBJPATH = "OBJs/viking_room.obj";
 const std::string OBJTEXPATH = "Textures/viking_room.png";
 
+const std::string WHITEGRIDPATH = "Textures/white_grid.jpg";
+
+const std::string WOODPATH = "Textures/wood.png";
+
 //--------------------------------------------- TESTING VALUES ----------------------------------------------------------------------------------
 const std::vector<Vertex> vertices = {
 	{{-40.5f, 0.f,40.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, {0,1,0}},
@@ -78,11 +82,19 @@ const std::string BlinnPhongFShaderPath = "Shaders/BlinnPhongShaderFrag.spv";
 
 void SceneBuilder::setupScene()
 {
+
+	//TEXTURES
+	Texture vikingTex = Texture(OBJTEXPATH);
+	Texture whiteGridTex = Texture(WHITEGRIDPATH);
+	Texture woodTex = Texture(WOODPATH);
+
+
+
+
 	// TEXTURED OBJECTS
 	std::vector<std::shared_ptr<MeshTexture>> meshes;
-	Texture tex = Texture(OBJTEXPATH);
 	std::shared_ptr<MeshTexture> m(new MeshTexture(OBJPATH));
-	m->setTexture(std::make_shared<Texture>(tex));
+	m->setTexture(std::make_shared<Texture>(vikingTex));
 	m->rotate(glm::vec3(-1, 0, 0));
 	meshes.push_back(m);
 
@@ -123,26 +135,48 @@ void SceneBuilder::setupScene()
 
 	// LIGHTS
 	//directional light
-	std::shared_ptr<DirectionalLight> dLightTemp(new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.1f, 1.0f , glm::vec3(-1.0f, -1.0f,1.0f)));
+	std::shared_ptr<DirectionalLight> dLightTemp(new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.00f, 0.01f , glm::vec3(-1.0f, -1.0f,1.0f)));
 	directionalLight = dLightTemp;
 	//point lights
-	std::shared_ptr<PointLight> pLightTemp(new PointLight(glm::vec3(5.0f), glm::vec3(1.0f), 0.2f, 0.1f, 0.1f, 0.2f, 0.9f));
-	pointLightList.push_back(pLightTemp);
+	std::shared_ptr<PointLight> pLightTemp1(new PointLight(glm::vec3(5.0f, 2.0f, 5.0f), glm::vec3(4.3f, 0.0f, 0.0f), 
+											1.0f, 0.22f, 0.2f,
+											0.0f, 1.0f));
+	pointLightList.push_back(pLightTemp1);
+
+	std::shared_ptr<PointLight> pLightTemp2(new PointLight(glm::vec3(5.0f, 2.0f, -5.0f), glm::vec3(0.0f, 0.0f, 4.0f), 
+											1.0f, 0.22f, 0.2f,
+											0.0f, 1.0f));
+	pointLightList.push_back(pLightTemp2);
+
+	std::shared_ptr<PointLight> pLightTemp3(new PointLight(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(0.0f, 5.0f, 0.0f),
+											1.0f, 0.22f, 0.2f,
+											0.0f, 1.0f));
+	pointLightList.push_back(pLightTemp3);
+
 
 	if (pointLightList.size() != PointLight::POINT_LIGHT_COUNT)
 	{
 		throw std::runtime_error("Incomplatable number of point lights loaded");
 	}
 	//spot lights
-	std::shared_ptr<SpotLight> sLightTemp(new SpotLight(glm::vec3(-5.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0, -1, 0), 0.2f, 0.8f, 0.1f, 0.1f, 0.2f, 30.0f));
+	std::shared_ptr<SpotLight> sLightTemp(new SpotLight(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 5.0f, 5.0f), glm::vec3(0, -1, 0),
+														0.00f, 1.0f,
+														1.0f, 0.5f, 0.07f,
+														15.0f));
 	spotLightList.push_back(sLightTemp);
+
+	std::shared_ptr<SpotLight> sLightTemp2(new SpotLight(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(5.0f, 10.0f, 10.0f), glm::normalize(glm::vec3(0, -1, -1.5)),
+		0.00f, 1.0f,
+		1.0f, 0.2f, 0.02f,
+		30.0f));
+	spotLightList.push_back(sLightTemp2);
 
 	if (spotLightList.size() != SpotLight::SPOT_LIGHT_COUNT)
 	{
 		throw std::runtime_error("Incomplatable number of spot lights loaded");
 	}
 	//MATERIALS
-	std::shared_ptr<Material> matTemp(new Material(0.6, 32.f));
+	std::shared_ptr<Material> matTemp(new Material(0.9, 256.f));
 	materialList.push_back(matTemp);
 
 
@@ -151,11 +185,12 @@ void SceneBuilder::setupScene()
 	std::shared_ptr<BlinnPhongMesh> bpMeshTemp(new BlinnPhongMesh(OBJPATH));
 	bpMeshTemp->translate(glm::vec3(5.0f, 0.0f, 0.0f));
 	bpMeshTemp->rotate(glm::vec3(-1, 0, 0));
-	bpMeshTemp->setTexture(std::make_shared<Texture>(tex));
+	bpMeshTemp->scale(glm::vec3(10.f));
+	bpMeshTemp->setTexture(std::make_shared<Texture>(vikingTex));
 	bpMeshes.push_back(bpMeshTemp);
 
 	std::shared_ptr<BlinnPhongMesh> bpMeshTemp2 = std::make_shared<BlinnPhongMesh>(BlinnPhongMesh(vertices));
-	bpMeshTemp2->setTexture(std::make_shared<Texture>(tex));
+	bpMeshTemp2->setTexture(std::make_shared<Texture>(woodTex));
 	bpMeshTemp2->setIndices(indices);
 	bpMeshes.push_back(bpMeshTemp2);
 
@@ -330,19 +365,13 @@ void SceneBuilder::updateUniformBuffers(uint32_t currentImage, Camera& cam, VkEx
 	for (auto& mesh : shaderBlinPhong->getMeshes())
 	{
 		mesh->updateUniformBuffer(currentImage, cam, swapChainExtent, device);
-		mesh->setLightingUBOBuffers(currentImage, device, directionalLight, pointLightList, spotLightList, materialList[0]);
+		mesh->setLightingUBOBuffers(currentImage, device, directionalLight, pointLightList, spotLightList, materialList[0], cam);
 		mesh->updateCampPosBuffer(currentImage, cam, device);
 
 	}
 }
 
-void SceneBuilder::setLightingUBOBuffers(uint32_t currentImage, VkDevice device)
-{
-	for (auto mesh : shaderBlinPhong->getMeshes())
-	{
-		mesh->setLightingUBOBuffers(currentImage, device, directionalLight, pointLightList, spotLightList, materialList[0]);
-	}
-}
+
 
 void SceneBuilder::createDescriptorPool(VkDevice device, int swapChainSize)
 {

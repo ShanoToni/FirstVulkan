@@ -27,8 +27,6 @@ public:
 
 	void updateUniformBuffers(uint32_t currentImage, Camera& cam, VkExtent2D swapChainExtent, VkDevice device);
 
-	void setLightingUBOBuffers(uint32_t currentImage, VkDevice device);
-
 	void createDescriptorPool(VkDevice device, int swapChainSize);
 
 	void createDescriptorSets(std::vector<VkImage> swapChainImages, VkDevice device);
