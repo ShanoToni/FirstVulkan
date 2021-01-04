@@ -7,12 +7,12 @@ OffscreenBuffer::OffscreenBuffer()
 void OffscreenBuffer::createOffscreen(VkFormat depthFormat, VkExtent2D swapChainExtent, VkDevice device, VkPhysicalDevice physicalDevice, VkFormat swapChainImageFormat, ScreenQuadMesh& mesh)
 {
 	VulkanHelperFunctions::createImage(swapChainExtent.width, swapChainExtent.height,
-		VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		offImageColor, offImageColorMemory, device, physicalDevice);
 
-	offImageColorView = VulkanHelperFunctions::createImageView(offImageColor, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, device);
+	offImageColorView = VulkanHelperFunctions::createImageView(offImageColor, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, device);
 
 	// CREATE SAMPLER TO SAMPLER FROM THE ATTACHMENT IN THE FRAGMENT SHADER
 	VkSamplerCreateInfo samplerInfo{};

@@ -138,18 +138,18 @@ void SceneBuilder::setupScene()
 	std::shared_ptr<DirectionalLight> dLightTemp(new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.00f, 0.01f , glm::vec3(-1.0f, -1.0f,1.0f)));
 	directionalLight = dLightTemp;
 	//point lights
-	std::shared_ptr<PointLight> pLightTemp1(new PointLight(glm::vec3(5.0f, 2.0f, 5.0f), glm::vec3(4.3f, 0.0f, 0.0f), 
-											1.0f, 0.22f, 0.2f,
+	std::shared_ptr<PointLight> pLightTemp1(new PointLight(glm::vec3(5.0f, 2.0f, 5.0f), glm::vec3(8.3f, 0.0f, 0.0f), 
+											1.0f, 0.2f, 0.02f,
 											0.0f, 1.0f));
 	pointLightList.push_back(pLightTemp1);
 
-	std::shared_ptr<PointLight> pLightTemp2(new PointLight(glm::vec3(5.0f, 2.0f, -5.0f), glm::vec3(0.0f, 0.0f, 4.0f), 
-											1.0f, 0.22f, 0.2f,
+	std::shared_ptr<PointLight> pLightTemp2(new PointLight(glm::vec3(5.0f, 2.0f, -5.0f), glm::vec3(0.0f, 0.0f, 8.0f), 
+											1.0f, 0.2f, 0.02f,
 											0.0f, 1.0f));
 	pointLightList.push_back(pLightTemp2);
 
-	std::shared_ptr<PointLight> pLightTemp3(new PointLight(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(0.0f, 5.0f, 0.0f),
-											1.0f, 0.22f, 0.2f,
+	std::shared_ptr<PointLight> pLightTemp3(new PointLight(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(0.0f, 8.0f, 0.0f),
+											1.0f, 0.2f, 0.02f,
 											0.0f, 1.0f));
 	pointLightList.push_back(pLightTemp3);
 
@@ -159,15 +159,15 @@ void SceneBuilder::setupScene()
 		throw std::runtime_error("Incomplatable number of point lights loaded");
 	}
 	//spot lights
-	std::shared_ptr<SpotLight> sLightTemp(new SpotLight(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 5.0f, 5.0f), glm::vec3(0, -1, 0),
+	std::shared_ptr<SpotLight> sLightTemp(new SpotLight(glm::vec3(15.0f, 15.0f, 15.0f), glm::vec3(0.0f, 5.0f, 5.0f), glm::vec3(0, -1, 0),
 														0.00f, 1.0f,
 														1.0f, 0.5f, 0.07f,
 														15.0f));
 	spotLightList.push_back(sLightTemp);
 
-	std::shared_ptr<SpotLight> sLightTemp2(new SpotLight(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(5.0f, 10.0f, 10.0f), glm::normalize(glm::vec3(0, -1, -1.5)),
+	std::shared_ptr<SpotLight> sLightTemp2(new SpotLight(glm::vec3(11.0f, 11.0f, 11.0f), glm::vec3(5.0f, 10.0f, 10.0f), glm::normalize(glm::vec3(0, -1, 1.5)),
 		0.00f, 1.0f,
-		1.0f, 0.2f, 0.02f,
+		1.0f, 0.002f, 0.0002f,
 		30.0f));
 	spotLightList.push_back(sLightTemp2);
 
@@ -370,8 +370,6 @@ void SceneBuilder::updateUniformBuffers(uint32_t currentImage, Camera& cam, VkEx
 
 	}
 }
-
-
 
 void SceneBuilder::createDescriptorPool(VkDevice device, int swapChainSize)
 {

@@ -35,8 +35,8 @@ void main()
 			vec2( offset, -offset)
 		);
 
-    /*
 	//Color invers
+    /*
 	if(toggle==1)
 	{
 		FragColor = pow(vec4(vec3( 1.0f - texture(tex, TexCoord)), 1.0f), vec4(2.2));
