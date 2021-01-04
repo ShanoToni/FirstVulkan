@@ -14,9 +14,7 @@ void main()
 	float gamma = 2.2;
 	vec3 hdrColor = texture(texSampler, fragTexCoord).xyz;
 
-	vec3 mapped = vec3(1.0) - exp(-hdrColor * 0.2);
-
-	mapped = pow(mapped, vec3(1.0f/gamma));
+	vec3 mapped = vec3(1.0) - exp(-hdrColor * 1.0);
 
 	outColor = vec4(mapped, 1.0f);
 

@@ -27,7 +27,7 @@ void Camera::processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    const float cameraSpeed = 0.01f;
+    const float cameraSpeed = 0.2f;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
